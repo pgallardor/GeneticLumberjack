@@ -1,4 +1,4 @@
-// Este programa genera casos de prueba con valores dentro de los rangos 
+// Este programa genera casos de prueba con valores dentro de los rangos
 // especificados.
 #include <iostream>
 #include <ctime>
@@ -46,12 +46,12 @@ int main() {
 		M[j] = aux;
 	}
 	// descomentar para visualizar donde se están colocando los árboles
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < n; j++) {
-			// cerr << M[i*n + j] << " ";
-		}
-		// cerr << endl;
-	}
+	// for (int i = 0; i < n; i++) {
+	// 	for (int j = 0; j < n; j++) {
+	// 		cerr << M[i*n + j] << " ";
+	// 	}
+	// 	cerr << endl;
+	// }
 	for (int i = 0; i < nn; i++) {
 		if (M[i]) {
 			int x = i / n;
