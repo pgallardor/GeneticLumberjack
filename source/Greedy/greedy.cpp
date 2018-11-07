@@ -97,7 +97,7 @@ int next(int N, int E, int x, int y){
 			int tx = buff._x, ty = buff._y, cost = costToGo(x, y, tx, ty);
 			queued++;
 
-			if (buff.canCut(E - cost) && value[tree_idx].first / cost > best_value){
+			if (buff.canCut(E - cost) && value[tree_idx].first / (cost + buff._d) > best_value){
 				best_value = value[tree_idx].first / cost;
 				sol = tree_idx;
 				canCutSomething = true;
