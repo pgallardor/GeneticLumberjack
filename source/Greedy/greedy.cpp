@@ -40,7 +40,7 @@ int costToGo(int x1, int y1, int x2, int y2){
 	return abs(x2 - x1) + abs(y2 - y1);
 }
 
-double simulate(int N, int idx, int dir, bool dropping = true){
+double simulate(int N, int idx, int dir, bool dropping){
 	double result = 0.0f;
 	int tree_propag = idx;
 
@@ -48,7 +48,7 @@ double simulate(int N, int idx, int dir, bool dropping = true){
 		Tree t = list[tree_propag];
 		int H = t._h, xi = t._x, yi = t._y;
 
-		for (int i = 0; i < H; i++){
+		for (int i = 0; i < H - 1; i++){
 			if (dir == UP) yi++;
 			if (dir == DOWN) yi--;
 			if (dir == LEFT) xi--;
@@ -65,16 +65,19 @@ double simulate(int N, int idx, int dir, bool dropping = true){
 					tree_propag = -1;
 					break;
 				}
-				
+
 				Tree dropped = list[to_check];
 				result += dropped.getValue();
 				tree_propag = to_check;
-				if (dropping)
+
+				if (dropping){
 					down[to_check] = true;
+				}
+
 				break;
 			}
 
-			if (i + 1 == H) 
+			if (i + 2 == H) 
 				tree_propag = -1;
 		}
 	}
@@ -84,7 +87,7 @@ double simulate(int N, int idx, int dir, bool dropping = true){
 
 int next(int N, int E, int x, int y){
 	queue<ii> q;
-	int queued = 0, limit = 4;
+	int queued = 0, limit = 5;
 	int sol = -1, best_value = -1, t_sol, t_best;
 	bool canCutSomething = false;
 	map<ii, bool> visited;
@@ -216,7 +219,7 @@ int main(){
 	double useless;
 	while (energy > 0){
 		tree_index = next(N, energy, xi, yi);
-		if (tree_index == -1) return -1;
+		//if (tree_index == -1) return -1;
 		//printf("going to tree %d\n", tree_index);
 		Tree buff = list[tree_index];
 		print_moves(energy, xi, yi, buff._x, buff._y);
@@ -229,7 +232,7 @@ int main(){
 		energy -= buff._d;
 
 		printf("cut %s\n", dir_str[value[tree_index].second]);
-		useless = simulate(N, tree_index, value[tree_index].second);
+		useless = simulate(N, tree_index, value[tree_index].second, true);
 	}
 
 	return 0;
