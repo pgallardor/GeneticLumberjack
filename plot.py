@@ -17,8 +17,8 @@ fig = pl.figure()
 ax = fig.add_subplot(111)
 ax.set_aspect('equal', 'box')
 pl.plot(xs, ys, 'o', color='green')
-pl.xlim(xmin=-1)
-pl.ylim(ymin=-1)
+pl.xlim(left=-1)
+pl.ylim(bottom=-1)
 pl.grid(True)
 
 delta_x = {'up': 0, 'left': -1, 'down': 0, 'right': 1}
