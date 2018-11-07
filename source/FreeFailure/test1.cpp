@@ -18,7 +18,8 @@ int main(){
 	Info i(v, t, n);
 
 	Genetic gen(&i, tree, 60, 0.15, 0.05, 0.90, 3.00);
-	Chromosome sol = gen.run(10);
-	printf("Best: %.2f\n", sol.getFitness());
+	Chromosome sol = gen.run(20);
+	//printf("Best: %.2f\n", sol.getFitness());
+	i.print(sol);
 	return 0;
 }

@@ -1,14 +1,92 @@
-#pragma once
+#include <ctime>
 #include <vector>
 #include <cmath>
 #include <cstdio>
 #include <algorithm>
-#include "chromosome.hpp"
+#include <cstdlib>
+#include <utility>
 #define UP 0
 #define DOWN 1
 #define LEFT 2
 #define RIGHT 3
 using namespace std;
+
+typedef pair<int, int> ii;
+
+class Chromosome{
+	private:
+		vector<ii> _v;
+		double _fit;
+
+	public:
+		Chromosome(int N);
+		Chromosome(vector<ii> v);
+		ii at(int i);
+		double getFitness();
+		void setFitness(double f);
+		int getLength();
+		Chromosome getCopy();
+		vector<ii> getVector();
+		void swap(int i, int j);
+		void mutate(int i);
+};
+
+Chromosome::Chromosome(int N){
+	vector<bool> used(N, false);
+	int r, s;
+	for (int i = 0; i < N; i++){
+		do{
+			r = rand() % N;
+		}while(used[r]);
+
+		used[r] = true;
+		s = rand() % 4;
+		_v.push_back(ii(r, s));
+	}
+	
+	_fit = -1.0f;
+}
+
+Chromosome::Chromosome(vector<ii> v){
+	_v = vector<ii>(v);
+}
+
+ii Chromosome::at(int i){
+	if (i < _v.size())
+		return _v[i];
+	return ii(-1, -1);
+}
+
+int Chromosome::getLength(){
+	return _v.size();
+}
+
+double Chromosome::getFitness(){
+	return _fit;
+}
+
+void Chromosome::setFitness(double f){
+	_fit = f;
+}
+
+Chromosome Chromosome::getCopy(){
+	return Chromosome(this->_v);
+}
+
+vector<ii> Chromosome::getVector(){
+	return vector<ii>(this->_v);
+}
+
+void Chromosome::swap(int i, int j){
+	ii aux = _v[i];
+	_v[i] = _v[j];
+	_v[j] = aux;
+}
+
+void Chromosome::mutate(int i){
+	_v[i].second = (_v[i].second + rand() % 4) % 4;
+}
+
 
 struct Tree{
 	int _x, _y, _h, _d, _c, _p;
@@ -100,25 +178,85 @@ void Info::build(int grid_size){
 	delete [] grid;
 }
 
+void Info::print(Chromosome c){
+	int N = c.getLength();
+	vector<bool> down(N, false);
+	char s[5][7] = {"up", "down", "left", "right", "lul"};
+
+	int x = 0, y = 0, t_steps = this->steps, dx, dy;
+
+	for (int i = 0; i < N; i++){
+		ii act = c.at(i);
+		if (down[act.first]) continue;
+
+		Tree t = this->tr[act.first];
+		dx = t._x - x, dy = t._y - y;
+
+		if (dx < 0){
+			while (x > t._x){
+				if (!t_steps) return;
+				t_steps--;
+				x--;
+				printf("move left\n");
+			}
+		}
+		else{
+			while(x < t._x){
+				if (!t_steps) return;
+				t_steps--;
+				x++;
+				printf("move right\n");
+			}
+		}
+
+		if (dy < 0){
+			while (y > t._y){
+				if (!t_steps) return;
+				t_steps--;
+				y--;
+				printf("move down\n");
+			}
+		}
+		else{
+			while(y < t._y){
+				if (!t_steps) return;
+				t_steps--;
+				y++;
+				printf("move up\n");
+			}
+		}
+
+		if (t_steps < t._d) return;
+		t_steps -= t._d;
+		printf("cut %s\n", s[act.second]);
+		this->cut(act.first, act.second, down);
+	}
+}
+
 double Info::objective(Chromosome c){
 	int N = c.getLength();
 	double fx = 0.0f;
 	vector<bool> down(N, false);
+	printf("entering objective function\n");
 
 	int x = 0, y = 0, t_steps = this->steps;
 
-	for (int i = 0; i < N && t_steps > 0; i++){
+	for (int i = 0; i < N && t_steps > 0; i++){;
 		ii act = c.at(i);
+
+		printf("going to tree %d\n", act.first);
 		if (down[act.first]) continue;
 
 		Tree t = this->tr[act.first];
 		t_steps -= (abs(x - t._x) + abs(y - t._y));
 
+		printf("reached tree %d\n", act.first);
 		if (t_steps < t._d) break;
 
 		x = t._x; y = t._y;
 		fx += this->cut(act.first, act.second, down);
 		t_steps -= t._d;
+		printf("finished with tree %d\n", act.first);
 	}
 
 	return fx;
@@ -128,11 +266,12 @@ double Info::cut(int i, int dir, vector<bool> &down){
 	Tree t = this->tr[i], buff(0,0,0,0,0,0);
 	int tree_i = i;
 	double val = t._h * t._p * t._d;
+	down[i] = true;
 
 	while(adj[dir][tree_i].size()){
 		bool found = false;
-		for (int k = 0; k < adj[dir][i].size(); k++){
-			int tree_k = adj[dir][i][k]; 
+		for (int k = 0; k < adj[dir][tree_i].size(); k++){
+			int tree_k = adj[dir][tree_i][k]; 
 			if (down[tree_k]) continue;
 				
 			found = true;
@@ -266,6 +405,7 @@ Chromosome Genetic::tournament(int t_size){
 Chromosome Genetic::run(int it_limit){
 	//
 	for (int i = 0; i < it_limit; i++){
+		printf("Generation %d\n", i + 1);
 		vector<Chromosome> new_pop;
 		double probs;
 		new_pop.push_back(_pop[_best_idx]); //ensure the best
@@ -285,6 +425,7 @@ Chromosome Genetic::run(int it_limit){
 		_pop_size = new_pop.size();
 
 		for (int k = 0; k < _pop_size; k++){
+			printf("new chromosome k = %d\n", k);
 			probs = (rand() % 101) / 100;
 			if (probs < _order_mutation_ratio){
 				int a = rand() % _chr_len, b = rand() % _chr_len;
@@ -300,13 +441,38 @@ Chromosome Genetic::run(int it_limit){
 					sm = rand() % 2*_chr_len/3 + (_chr_len / 3);
 				new_pop[k].mutate(sm);
 			}
-			new_pop[k].setFitness(_in->objective(new_pop[k]));
+			double fit_k = _in->objective(new_pop[k]);
+			printf("setting fitness\n");
+			new_pop[k].setFitness(fit_k);
 			if (new_pop[_best_idx].getFitness() < new_pop[k].getFitness()) _best_idx = k;
 
 		}
-
+		printf("finished generation %d\n", i + 1);
 		_pop = new_pop;
 	}
 
 	return _pop[_best_idx];
+}
+
+
+int main(){
+	srand(time(NULL));
+	vector<Tree> v;
+	int t, n, tree;
+	int x, y, h, d, c, p;
+	scanf("%d %d %d", &t, &n, &tree);
+
+	for (int i = 0; i < tree; i++){
+		scanf("%d %d %d %d %d %d", &x, &y, &h, &d, &c, &p);
+		Tree tr(x, y, h, d, c, p);
+		v.push_back(tr);
+	}
+
+	Info i(v, t, n);
+
+	Genetic gen(&i, tree, 60, 0.15, 0.05, 0.90, 3.00);
+	Chromosome sol = gen.run(10);
+	//printf("Best: %.2f\n", sol.getFitness());
+	i.print(sol);
+	return 0;
 }
