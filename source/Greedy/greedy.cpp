@@ -96,15 +96,15 @@ int next(int N, int E, int x, int y){
 			Tree buff = list[tree_idx];
 			int tx = buff._x, ty = buff._y, cost = costToGo(x, y, tx, ty);
 			queued++;
-
-			if (buff.canCut(E - cost) && value[tree_idx].first / (cost + buff._d) > best_value){
-				best_value = value[tree_idx].first / cost;
+			double ratio = value[tree_idx].first / (cost + buff._d);
+			if (buff.canCut(E - cost) && ratio > best_value){
+				best_value = ratio;
 				sol = tree_idx;
 				canCutSomething = true;
 			}
-			else if (value[tree_idx].first / cost > best_value){
+			else if (ratio > best_value){
 				t_sol = tree_idx;
-				t_best = value[tree_idx].first / cost;
+				t_best = ratio;
 			}
 		}
 		ii neighs[4];
