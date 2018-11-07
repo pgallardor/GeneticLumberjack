@@ -87,7 +87,7 @@ double simulate(int N, int idx, int dir, bool dropping){
 
 int next(int N, int E, int x, int y){
 	queue<ii> q;
-	int queued = 0, limit = 4;
+	int queued = 0, limit = 5;
 	int sol = -1, best_value = -1, t_sol, t_best;
 	bool canCutSomething = false;
 	map<ii, bool> visited;
