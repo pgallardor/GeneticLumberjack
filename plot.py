@@ -1,3 +1,4 @@
+# coding: utf8
 import pylab as pl
 
 def read_points(filename):
