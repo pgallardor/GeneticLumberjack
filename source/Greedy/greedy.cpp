@@ -60,7 +60,12 @@ double simulate(int N, int idx, int dir, bool dropping = true){
 			}
 
 			int to_check = grid[yi][xi];
-			if (to_check != -1 && !down[to_check] && t.canDrop(list[to_check])){
+			if (to_check != -1 && !down[to_check]){
+				if (!t.canDrop(list[to_check])){
+					tree_propag = -1;
+					break;
+				}
+				
 				Tree dropped = list[to_check];
 				result += dropped.getValue();
 				tree_propag = to_check;
