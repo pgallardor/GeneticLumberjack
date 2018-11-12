@@ -48,7 +48,7 @@ double simulate(int N, int idx, int dir, bool dropping){
 		Tree t = list[tree_propag];
 		int H = t._h, xi = t._x, yi = t._y;
 
-		for (int i = 0; i < H - 1; i++){
+		for (int i = 1; i < H; i++){
 			if (dir == UP) yi++;
 			if (dir == DOWN) yi--;
 			if (dir == LEFT) xi--;
@@ -77,8 +77,10 @@ double simulate(int N, int idx, int dir, bool dropping){
 				break;
 			}
 
-			if (i + 2 == H) 
+			if (i + 1 == H){
 				tree_propag = -1;
+				break;
+			}
 		}
 	}
 
