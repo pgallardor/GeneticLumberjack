@@ -1,5 +1,5 @@
 # El archivo que calcula la solución (el que sería subido a optil.io)
-SOLUTION=loop.cpp
+SOLUTION=source/Greedy/greedy.cpp
 
 # make gen: compila y ejecuta el programa que genera casos de prueba
 gen:
