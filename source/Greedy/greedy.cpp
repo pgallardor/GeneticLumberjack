@@ -9,6 +9,7 @@
 #define DOWN 1
 #define LEFT 2
 #define RIGHT 3
+#define LIMIT 6
 using namespace std;
 
 typedef pair<int, int> ii;
@@ -47,6 +48,8 @@ double simulate(int N, int idx, int dir, bool dropping){
 	while (tree_propag >= 0){
 		Tree t = list[tree_propag];
 		int H = t._h, xi = t._x, yi = t._y;
+
+		if (H == 1) break;
 
 		for (int i = 1; i < H; i++){
 			if (dir == UP) yi++;
@@ -89,7 +92,7 @@ double simulate(int N, int idx, int dir, bool dropping){
 
 int next(int N, int E, int x, int y){
 	queue<ii> q;
-	int queued = 0, limit = 5;
+	int queued = 0;
 	int sol = -1, best_value = -1, t_sol, t_best;
 	bool canCutSomething = false;
 	map<ii, bool> visited;
@@ -99,7 +102,7 @@ int next(int N, int E, int x, int y){
 	visited[init] = true;
 
 	//falta alguna wea para limitar la búsqueda
-	while(queued < limit && !q.empty()){
+	while(queued < LIMIT && !q.empty()){
 		ii act = q.front(); q.pop();
 		int tree_idx = grid[act.first][act.second];
 		if (tree_idx != -1 && !down[tree_idx]){
