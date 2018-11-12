@@ -9,7 +9,7 @@
 #define DOWN 1
 #define LEFT 2
 #define RIGHT 3
-#define LIMIT 6
+#define LIMIT 256
 using namespace std;
 
 typedef pair<int, int> ii;
@@ -19,10 +19,10 @@ char dir_str[4][7] = {"up", "down", "left", "right"};
 class Tree{
 	public:
 		int _x, _y, _d, _h, _cu, _pu;
-		Tree(int x, int y, int h, int d, int c, int p) : 
+		Tree(int x, int y, int h, int d, int c, int p) :
 			_x(x), _y(y), _h(h), _d(d), _cu(c), _pu(p) {}
-		
-		double getValue() { return _pu * _h * _d; }
+
+		long getValue() { return _pu * _h * _d; }
 		bool canCut(int E) { return E >= _d; }
 		bool canDrop(Tree t) { return _cu * _h * _d > t._cu * t._h * t._d;}
 };
@@ -30,7 +30,7 @@ class Tree{
 vector<ii> value;
 vector<Tree> list;
 vector<bool> down;
-double total = 0.0f;
+double total = 0.0;
 int **grid;
 
 bool onBoundaries(int N, int x, int y){
@@ -41,8 +41,8 @@ int costToGo(int x1, int y1, int x2, int y2){
 	return abs(x2 - x1) + abs(y2 - y1);
 }
 
-double simulate(int N, int idx, int dir, bool dropping){
-	double result = 0.0f;
+long simulate(int N, int idx, int dir, bool dropping){
+	long result = 0;
 	int tree_propag = idx;
 
 	while (tree_propag >= 0){
@@ -109,7 +109,7 @@ int next(int N, int E, int x, int y){
 			Tree buff = list[tree_idx];
 			int tx = buff._x, ty = buff._y, cost = costToGo(x, y, tx, ty);
 			queued++;
-			double ratio = value[tree_idx].first / (cost + buff._d);
+			double ratio = double(value[tree_idx].first) / (cost + buff._d);
 			if (buff.canCut(E - cost) && ratio > best_value){
 				best_value = ratio;
 				sol = tree_idx;
@@ -122,7 +122,7 @@ int next(int N, int E, int x, int y){
 		}
 		ii neighs[4];
 		neighs[UP] = ii(act.first + 1, act.second); neighs[DOWN] = ii(act.first - 1, act.second);
-		neighs[LEFT] = ii(act.first, act.second - 1); neighs[RIGHT] = ii(act.first, act.second + 1); 
+		neighs[LEFT] = ii(act.first, act.second - 1); neighs[RIGHT] = ii(act.first, act.second + 1);
 
 		for (int i = 0; i < 4; i++){
 			if (onBoundaries(N, neighs[i].second, neighs[i].first) && !visited.count(neighs[i])){
@@ -140,10 +140,10 @@ int next(int N, int E, int x, int y){
 
 void calculateValues(int N, int T){
 	for (int i = 0; i < T; i++){
-		double val = list[i].getValue(), best_drop_value = -1.0f;
+		long val = list[i].getValue(), best_drop_value = -1;
 		int dir = -1;
 		for (int direction = 0; direction < 4; direction++){
-			double tmp = simulate(N, i, direction, false);
+			long tmp = simulate(N, i, direction, false);
 			if (tmp > best_drop_value){
 				dir = direction;
 				best_drop_value = tmp;
@@ -221,12 +221,13 @@ int main(){
 
 	int energy = E;
 	int xi = 0, yi = 0, tree_index;
-	double useless;
+	long useless = 0;
 	while (energy > 0){
 		tree_index = next(N, energy, xi, yi);
 		//if (tree_index == -1) return -1;
 		//printf("going to tree %d\n", tree_index);
 		Tree buff = list[tree_index];
+		useless += buff.getValue();
 		print_moves(energy, xi, yi, buff._x, buff._y);
 
 		if (!energy || !buff.canCut(energy)) break;
@@ -237,9 +238,9 @@ int main(){
 		energy -= buff._d;
 
 		printf("cut %s\n", dir_str[value[tree_index].second]);
-		useless = simulate(N, tree_index, value[tree_index].second, true);
+		useless += simulate(N, tree_index, value[tree_index].second, true);
 	}
-
+	printf("cut %s\n", dir_str[value[tree_index].second]);
+	// fprintf(stderr, "PROFIT: %ld\n", useless);
 	return 0;
 }
-
