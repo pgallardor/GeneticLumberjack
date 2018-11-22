@@ -9,11 +9,11 @@
 #define DOWN 1
 #define LEFT 2
 #define RIGHT 3
-#define LIMIT 42
-#define RND_TESTS 4
+#define LIMIT 256 //32
 using namespace std;
 
-typedef pair<int, int> ii;
+typedef pair<double, int> di;
+typedef pair<double, pair<int, int> > dii;
 
 char dir_str[4][7] = {"up", "down", "left", "right"};
 
@@ -28,10 +28,10 @@ class Tree{
 		bool canDrop(Tree t) { return _cu * _h * _d > t._cu * t._h * t._d;}
 };
 
-vector<ii> value; //valores máximos posibles para cada árbol
 vector<Tree> list; //lista de árboles con su información
 vector<bool> down; //arreglo de bools que lleva cuenta de los árboles caídos durante la simulación
-//double total = 0.0; 
+//double total = 0.0;
+
 int **grid; //campo
 
 bool onBoundaries(int N, int x, int y){
@@ -42,12 +42,47 @@ int costToGo(int x1, int y1, int x2, int y2){
 	return abs(x2 - x1) + abs(y2 - y1);
 }
 
+double table[4][10005];
+vector<ii> compression_row, compression_column;
+
+void DP(int TX, int t_idx, int hi, int dir){
+	if (hi == H) {
+		table[dir][t_idx] = (double)list[t_idx].getValue() / list[t_idx]._d; 
+		return;
+	}
+
+	
+}
+
+long bestValueCalc(int N, int idx){
+	Tree buff = list[idx];
+	int x = buff._x, y = buff._y, H = buff._h;
+
+	if (H == 1) return 0;
+
+	for (int i = 0; i < N; i++){
+		for (int j = 0; j < N; j++){
+			if (grid[i][j] != -1) compression_row.push_back(ii(grid[i][j], j));
+			if (grid[j][i] != -1) compression_column.push_back(ii(grid[j][i], j));
+		}
+		int lr = compression_row.size(), lc = compression_column.size();
+		DP(lr, compression_row[0].first, 0, UP);
+		DP(lr, compression_row[lr - 1].first, lr - 1, DOWN);
+		DP(lc, compression_column[0].first, 0, UP);
+		DP(lc, compression_row[lc - 1].first, lc - 1, DOWN);
+
+		compression_row.clear();
+		compression_column.clear();
+	}
+}
+
+//
+
 long simulate(int N, int idx, int dir, bool dropping){
 	long result = 0;
 	int tree_propag = idx;
 
 	while (tree_propag >= 0){
-		//printf("tree_propag = %d\n", tree_propag);
 		Tree t = list[tree_propag];
 		int H = t._h, xi = t._x, yi = t._y;
 
@@ -195,34 +230,11 @@ void init(int N){
 	}
 }
 
+//esto funcionará lol??
 void free(int N){
 	for (int i = 0; i < N; i++)
 		delete[] grid[i];
 	delete[] grid;
-}
-
-void generate_test(int tcase, int N, int &x, int &y, int &E){
-	if (tcase == RND_TESTS) return;
-	switch(tcase){
-		case 1:{
-			int perc = ceil(E*0.15);
-			x += min(N - 1, perc/2);
-			y += min(N - 1, perc/2 + perc%2);
-			E -= perc;
-			break;
-		}
-		case 2:{
-			int perc = ceil(E*0.10);
-			E -= perc;
-			y += min(perc, N - 1);
-			break;
-		}
-		case 3:{
-			int perc = ceil(E*0.10);
-			E-= perc;
-			x += min(N - 1, perc);
-		}
-	}
 }
 
 int main(){
@@ -237,76 +249,34 @@ int main(){
 		list.push_back(tr);
 		grid[y][x] = i;
 	}
-	
+
 	down.assign(T, false);
 	calculateValues(N, T);
+
+	/*for (int i = 0; i < T; i++){
+		printf("tree id: %d, est. value: %.2f, cut %s\n", i, (double)value[i].first, dir_str[value[i].second]);
+	}*/
+
+	int energy = E;
+	int xi = 0, yi = 0, tree_index;
+	long useless = 0;
+	while (energy > 0){
+		tree_index = next(N, energy, xi, yi);
+		Tree buff = list[tree_index];
+		useless += buff.getValue();
+		print_moves(energy, xi, yi, buff._x, buff._y);
+
+		if (!energy || !buff.canCut(energy)) break;
+
+		//printf("energy remaining: %d\n", energy);
+		xi = buff._x; yi = buff._y;
+		down[tree_index] = true;
+		energy -= buff._d;
+
+		printf("cut %s\n", dir_str[value[tree_index].second]);
+		useless += simulate(N, tree_index, value[tree_index].second, true);
+	}
 	
-
-	int rnd_tests = RND_TESTS;
-	long best_profit = -1;
-	int b_energy = -1, bx = -1, by = -1;
-	vector<int> best_config, tmp_config;
-
-	while(rnd_tests--){
-		down.assign(T, false);
-
-		/*for (int i = 0; i < T; i++){
-			printf("tree id: %d, est. value: %.2f, cut %s\n", i, (double)value[i].first, dir_str[value[i].second]);
-		}*/
-
-		int tmp_energy = E, energy;
-		int xi = 0, yi = 0, tree_index, t_xi, t_yi;
-
-		generate_test(rnd_tests + 1, N, xi, yi, tmp_energy);
-
-		energy = tmp_energy; t_xi = xi; t_yi = yi;
-		fprintf(stderr, "case %d: starting at (%d, %d)\n", RND_TESTS - rnd_tests + 1, xi, yi);
-		long useless = 0;
-		while (energy > 0){
-			tree_index = next(N, energy, xi, yi);
-			Tree buff = list[tree_index];
-			//print_moves(energy, xi, yi, buff._x, buff._y);
-			energy -= costToGo(xi, yi, buff._x, buff._y);
-			tmp_config.push_back(tree_index);
-
-			if (energy <= 0|| !buff.canCut(energy)) break;
-
-
-			useless += buff.getValue();
-			xi = buff._x; yi = buff._y;
-			down[tree_index] = true;
-			energy -= buff._d;
-
-			//printf("cut %s\n", dir_str[value[tree_index].second]);
-			useless += simulate(N, tree_index, value[tree_index].second, true);
-		}
-
-		fprintf(stderr, "PROFIT: %ld\n", useless);
-		if (best_profit < useless){
-			best_profit = useless;
-			bx = t_xi; by = t_yi;
-			b_energy = tmp_energy;
-			best_config.clear();
-			best_config.insert(best_config.end(), tmp_config.begin(), tmp_config.end());
-		}
-		tmp_config.clear();
-	}
-
-	down.assign(T, false);
-	for (int i = 0; i < best_config.size(); i++){
-		if (b_energy <= 0) break;
-		int trindex = best_config[i];
-		Tree buff = list[trindex];
-		print_moves(b_energy, bx, by, buff._x, buff._y);
-
-		if (b_energy <= 0 || !buff.canCut(b_energy)) break;
-
-		bx = buff._x; by = buff._y;
-		down[trindex] = true;
-		b_energy -= buff._d;
-		printf("cut %s\n", dir_str[value[trindex].second]);
-		long sss = simulate(N, trindex, value[trindex].second, true);
-	}
-
+	// fprintf(stderr, "PROFIT: %ld\n", useless);
 	return 0;
 }

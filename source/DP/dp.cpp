@@ -21,6 +21,60 @@ map<int, pair<int, int>> ortho = {
 	{RIGHT, {UP, DOWN}}
 };
 
+class Tree{
+	public:
+		int _x, _y, _d, _h, _cu, _pu;
+		Tree(int x, int y, int h, int d, int c, int p) :
+			_x(x), _y(y), _h(h), _d(d), _cu(c), _pu(p) {}
+
+		long getValue() { return _pu * _h * _d; }
+		bool canCut(int E) { return E >= _d; }
+		bool canDrop(Tree t) { return _cu * _h * _d > t._cu * t._h * t._d;}
+};
+
+
+vector<Tree> _trees;
+
+
+bool onBoundaries(int N, int x, int y){
+	return (x >= 0) && (y >= 0) && (x < N) && (y < N);
+}
+
+int costToGo(int x1, int y1, int x2, int y2){
+	return abs(x2 - x1) + abs(y2 - y1);
+}
+
+void print_moves(int &E, int x1, int y1, int x2, int y2){
+	if (x1 < x2){
+		while (E && x1++ < x2){
+			printf("move right\n");
+			E--;
+		}
+	}
+
+	else if (x1 > x2){
+		while (E && x1-- > x2){
+			printf("move left\n");
+			E--;
+		}
+	}
+
+	if (!E) return;
+
+	if (y1 < y2){
+		while (E && y1++ < y2){
+			printf("move up\n");
+			E--;
+		}
+	}
+
+	else if (y1 > y2){
+		while(E && y1-- > y2){
+			printf("move down\n");
+			E--;
+		}
+	}
+}
 // retorna la lista de indeices de arboles que estan a distancia menor que h y pesan menos que arbol i
 vector<int> may_be_dominoed(int i, int dir) {
 	// not implemented
@@ -28,18 +82,15 @@ vector<int> may_be_dominoed(int i, int dir) {
 }
 
 long profit(int t) {
-	// not implemented
-	return 0;
+	return _trees[t].getValue();
 }
 
 long cost(int t) {
-	// not implemented
-	return 0;
+	return _trees[t]._d;
 }
 
 par best(par p, par q) {
-	// not implemented
-	return {0, 0};
+	return (p.first/p.second > q.first/q.second) ? p : q;
 }
 
 // retorna los arboles que estan entre t1 y t2, independiente de si son botables o no
