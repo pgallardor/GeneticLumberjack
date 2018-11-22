@@ -7,6 +7,7 @@
 using namespace std;
 
 enum Dir {UP=0, DOWN, LEFT, RIGHT};
+char dir_str[4][7] = {"up", "down", "left", "right"};
 
 // first: value, second: energy
 typedef pair<long, long> par;
@@ -135,9 +136,8 @@ vector<int> trees_between(int N, int t1, int t2, int dir) {
 
 	vector<int> result;
 
-	while(x1 != x2 || y1 != y2){
-		x1 += delta.first; y1 = delta.second;
 
+	for (x1 = x1 + delta.first, y1 = y1 + delta.second; x1 != x2 || y1 != y2; x1 += delta.first, y1 += delta.second){
 		if (!onBoundaries(N, x1, y1)) break;
 
 		int tree_idx = grid[y1][x1];
@@ -148,16 +148,20 @@ vector<int> trees_between(int N, int t1, int t2, int dir) {
 }
 
 par dp(int N, int t, int dir) {
+	printf("t = %d, dir = %s\n", t, dir_str[dir]);
 	if (DP[dir][t].first != UNDEF) {
 		return DP[dir][t];
 	}
 	vector<int> trees = may_be_dominoed(N, t, dir);
+	printf("may be domm: %d\n", trees.size());
+
 	if (trees.empty()) {
 		return DP[dir][t] = {profit(t), cost(t)};
 	}
 	par ans = {UNDEF, UNDEF};
 	for (auto tree: trees) {
 		vector<int> between = trees_between(N, t, tree, dir);
+		printf("betw: %d\n", between.size());
 		vector<par> results(between.size());
 		par last = dp(N, tree, dir);
 		long value = profit(t) + last.first;
@@ -177,6 +181,30 @@ par dp(int N, int t, int dir) {
 
 
 int main(int argc, char const *argv[]) {
-	vector<vector<int>> M(10, vector<int>(10));
+	int E, N, T, x, y, h, d, c, p;
+	scanf("%d %d %d", &E, &N, &T);
+
+	init(N);
+	DP = matriz(4, vector<par>(N, {UNDEF, UNDEF}));
+
+	for (int i = 0; i < T; i++){
+		scanf("%d %d %d %d %d %d", &x, &y, &h, &d, &c, &p);
+		Tree tr(x, y, h, d, c, p);
+		_trees.push_back(tr);
+		grid[y][x] = i;
+	}
+
+	for (int i = 0; i < 4; i++){
+		for (int t = 0; t < T; t++)
+			par useless = dp(N, t, i);
+	}
+
+	for (int i = 0; i < 4; i++){
+		printf("%s\n", dir_str[i]);
+		for (int t = 0; t < T; t++)
+			printf("tree %d: (%ld, %ld)\n", t, DP[i][t].first, DP[i][t].second);
+	}
+
+	printf("no looperino\n");
 	return 0;
 }
