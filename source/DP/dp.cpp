@@ -42,6 +42,7 @@ class Tree{
 
 int **grid;
 vector<Tree> _trees;
+vector<bool> _visited;
 
 void init(int N){
 	grid = new int*[N];
@@ -68,14 +69,12 @@ int costToGo(int x1, int y1, int x2, int y2){
 void print_moves(int &E, int x1, int y1, int x2, int y2){
 	if (x1 < x2){
 		while (E && x1++ < x2){
-			printf("move right\n");
 			E--;
 		}
 	}
 
 	else if (x1 > x2){
 		while (E && x1-- > x2){
-			printf("move left\n");
 			E--;
 		}
 	}
@@ -84,14 +83,12 @@ void print_moves(int &E, int x1, int y1, int x2, int y2){
 
 	if (y1 < y2){
 		while (E && y1++ < y2){
-			printf("move up\n");
 			E--;
 		}
 	}
 
 	else if (y1 > y2){
 		while(E && y1-- > y2){
-			printf("move down\n");
 			E--;
 		}
 	}
@@ -147,34 +144,35 @@ vector<int> trees_between(int N, int t1, int t2, int dir) {
 	return result;
 }
 
-par dp(int N, int t, int dir) {
-	printf("t = %d, dir = %s\n", t, dir_str[dir]);
+
+par dp(int depth, int N, int t, int dir) {
 	if (DP[dir][t].first != UNDEF) {
 		return DP[dir][t];
 	}
 	vector<int> trees = may_be_dominoed(N, t, dir);
-	printf("may be domm: %d\n", trees.size());
 
-	if (trees.empty()) {
-		return DP[dir][t] = {profit(t), cost(t)};
+	if (trees.empty() or _visited[t]) {
+		DP[dir][t] = {profit(t), cost(t)};
+		return DP[dir][t];
 	}
+	_visited[t] = true;
 	par ans = {UNDEF, UNDEF};
 	for (auto tree: trees) {
 		vector<int> between = trees_between(N, t, tree, dir);
-		printf("betw: %d\n", between.size());
 		vector<par> results(between.size());
-		par last = dp(N, tree, dir);
+		par last = dp(depth + 1, N, tree, dir);
 		long value = profit(t) + last.first;
 		long energy = cost(t);
 		for (int i = 0; i < between.size(); i++) {
 			par o = _ortho[dir];
-			results[i] = best(dp(N, between[i], o.first), dp(N, between[i], o.second));
+			results[i] = best(dp(depth + 1, N, between[i], o.first), dp(depth + 1, N, between[i], o.second));
 			value += results[i].first;
 			energy += results[i].second;
 		}
 		ans = best({value, energy}, ans);
 
 	}
+	_visited[t] = false;
 	return DP[dir][t] = ans;
 }
 
@@ -185,7 +183,7 @@ int main(int argc, char const *argv[]) {
 	scanf("%d %d %d", &E, &N, &T);
 
 	init(N);
-	DP = matriz(4, vector<par>(N, {UNDEF, UNDEF}));
+	DP = matriz(4, vector<par>(T, {UNDEF, UNDEF}));
 
 	for (int i = 0; i < T; i++){
 		scanf("%d %d %d %d %d %d", &x, &y, &h, &d, &c, &p);
@@ -193,18 +191,18 @@ int main(int argc, char const *argv[]) {
 		_trees.push_back(tr);
 		grid[y][x] = i;
 	}
-
+	_visited.assign(T, false);
 	for (int i = 0; i < 4; i++){
 		for (int t = 0; t < T; t++)
-			par useless = dp(N, t, i);
+			par useless = dp(0, N, t, i);
 	}
 
 	for (int i = 0; i < 4; i++){
-		printf("%s\n", dir_str[i]);
-		for (int t = 0; t < T; t++)
-			printf("tree %d: (%ld, %ld)\n", t, DP[i][t].first, DP[i][t].second);
+		for (int t = 0; t < T; t++) {
+			par p = DP[i][t];
+			printf("%s %d: %ld %ld\n", dir_str[i], t, p.first, p.second);
+		}
 	}
 
-	printf("no looperino\n");
 	return 0;
 }
