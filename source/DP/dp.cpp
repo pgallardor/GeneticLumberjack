@@ -32,9 +32,22 @@ class Tree{
 		bool canDrop(Tree t) { return _cu * _h * _d > t._cu * t._h * t._d;}
 };
 
-
+int **grid;
 vector<Tree> _trees;
 
+void init(int N){
+	grid = new int*[N];
+	for (int i = 0; i < N; i++){
+		grid[i] = new int[N];
+		for (int j = 0; j < N; j++) grid[i][j] = -1;
+	}
+}
+
+void free(int N){
+	for (int i = 0; i < N; i++)
+		delete[] grid[i];
+	delete[] grid;
+}
 
 bool onBoundaries(int N, int x, int y){
 	return (x >= 0) && (y >= 0) && (x < N) && (y < N);
@@ -76,9 +89,23 @@ void print_moves(int &E, int x1, int y1, int x2, int y2){
 	}
 }
 // retorna la lista de indeices de arboles que estan a distancia menor que h y pesan menos que arbol i
-vector<int> may_be_dominoed(int i, int dir) {
-	// not implemented
-	return {};
+vector<int> may_be_dominoed(int N, int ti, int dir) {
+	Tree t = _trees[ti];
+	int H = t._h, x = t._x, y = t._y;
+
+	vector<int> result;
+	par delta = _delta[dir];
+	for (int i = 1; i < H; i++){
+		x += delta.first; y += delta.second;
+
+		if (!onBoundaries(N, x, y)) break;
+
+		int tree_idx = grid[y][x];
+		if (tree_idx != -1 && t.canDrop(_trees[tree_idx]))
+			result.push_back(tree_idx);
+	}
+
+	return result;
 }
 
 long profit(int t) {
@@ -125,6 +152,8 @@ par dp(int t, int dir) {
 	}
 	return DP[dir][t] = ans;
 }
+
+
 
 int main(int argc, char const *argv[]) {
 	vector<vector<int>> M(10, vector<int>(10));
