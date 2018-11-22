@@ -1,12 +1,13 @@
 #include <iostream>
 #include <vector>
-#include <map>
+#include <cstdio>
+#include <cmath>
 
 #define UNDEF -1
 
 using namespace std;
 
-enum Dir {UP=0, DOWN, LEFT, RIGHT};
+enum Dir {UP, DOWN, LEFT, RIGHT, DIRS};
 char dir_str[4][7] = {"up", "down", "left", "right"};
 
 // first: value, second: energy
@@ -15,19 +16,8 @@ typedef vector<vector<par>> matriz;
 
 matriz DP;
 
-map<int, par> _ortho = {
-	{UP, {LEFT, RIGHT}},
-	{DOWN, {LEFT, RIGHT}},
-	{LEFT, {UP, DOWN}},
-	{RIGHT, {UP, DOWN}}
-};
-
-map<int, par> _delta = {
-	{UP, {0, 1}},
-	{DOWN, {0, -1}},
-	{LEFT, {-1, 0}},
-	{RIGHT, {1, 0}}
-};
+vector<par> _ortho(DIRS);
+vector<par> _delta(DIRS);
 
 class Tree{
 	public:
@@ -184,6 +174,14 @@ int main(int argc, char const *argv[]) {
 
 	init(N);
 	DP = matriz(4, vector<par>(T, {UNDEF, UNDEF}));
+	_ortho[UP] = {LEFT, RIGHT};
+	_ortho[DOWN] = {LEFT, RIGHT};
+	_ortho[LEFT] = {UP, DOWN};
+	_ortho[RIGHT] = {UP, DOWN};
+	_delta[UP] = {0, 1};
+	_delta[DOWN] = {0, -1};
+	_delta[LEFT] = {-1, 0};
+	_delta[RIGHT] = {1, 0};
 
 	for (int i = 0; i < T; i++){
 		scanf("%d %d %d %d %d %d", &x, &y, &h, &d, &c, &p);
