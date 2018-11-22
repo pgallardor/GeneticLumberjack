@@ -121,29 +121,43 @@ par best(par p, par q) {
 }
 
 // retorna los arboles que estan entre t1 y t2, independiente de si son botables o no
-vector<int> trees_between(int t1, int t2) {
-	// not implemented
-	return {};
+vector<int> trees_between(int N, int t1, int t2, int dir) {
+	par delta = _delta[dir];
+	Tree buff1 = _trees[t1], buff2 = _trees[t2];
+	int x1 = buff1._x, y1 = buff1._y, x2 = buff2._x, y2 = buff2._y;
+
+	vector<int> result;
+
+	while(x1 != x2 || y1 != y2){
+		x1 += delta.first; y1 = delta.second;
+
+		if (!onBoundaries(N, x1, y1)) break;
+
+		int tree_idx = grid[y1][x1];
+		if (tree_idx != -1) result.push_back(tree_idx);
+	}
+
+	return result;
 }
 
-par dp(int t, int dir) {
+par dp(int N, int t, int dir) {
 	if (DP[dir][t].first != UNDEF) {
 		return DP[dir][t];
 	}
-	vector<int> trees = may_be_dominoed(t, dir);
+	vector<int> trees = may_be_dominoed(N, t, dir);
 	if (trees.empty()) {
 		return DP[dir][t] = {profit(t), cost(t)};
 	}
 	par ans = {UNDEF, UNDEF};
 	for (auto tree: trees) {
-		vector<int> between = trees_between(t, tree);
+		vector<int> between = trees_between(N, t, tree, dir);
 		vector<par> results(between.size());
-		par last = dp(tree, dir);
+		par last = dp(N, tree, dir);
 		long value = profit(t) + last.first;
 		long energy = cost(t);
 		for (int i = 0; i < between.size(); i++) {
 			par o = ortho[dir];
-			results[i] = best(dp(between[i], o.first), dp(between[i], o.second));
+			results[i] = best(dp(N, between[i], o.first), dp(N, between[i], o.second));
 			value += results[i].first;
 			energy += results[i].second;
 		}
