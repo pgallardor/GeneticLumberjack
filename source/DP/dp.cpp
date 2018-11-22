@@ -6,7 +6,7 @@
 
 using namespace std;
 
-enum Dir {UP, DOWN, LEFT, RIGHT};
+enum Dir {UP=0, DOWN, LEFT, RIGHT};
 
 // first: value, second: energy
 typedef pair<long, long> par;
@@ -14,11 +14,18 @@ typedef vector<vector<par>> matriz;
 
 matriz DP;
 
-map<int, pair<int, int>> ortho = {
+map<int, par> _ortho = {
 	{UP, {LEFT, RIGHT}},
 	{DOWN, {LEFT, RIGHT}},
 	{LEFT, {UP, DOWN}},
 	{RIGHT, {UP, DOWN}}
+};
+
+map<int, par> _delta = {
+	{UP, {0, 1}},
+	{DOWN, {0, -1}},
+	{LEFT, {-1, 0}},
+	{RIGHT, {1, 0}}
 };
 
 class Tree{
@@ -115,7 +122,7 @@ par dp(int t, int dir) {
 		long value = profit(t) + last.first;
 		long energy = cost(t);
 		for (int i = 0; i < between.size(); i++) {
-			par o = ortho[dir];
+			par o = _ortho[dir];
 			results[i] = best(dp(between[i], o.first), dp(between[i], o.second));
 			value += results[i].first;
 			energy += results[i].second;
