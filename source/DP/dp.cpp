@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <map>
 #include <cstdio>
 #include <cmath>
 
@@ -18,6 +19,8 @@ matriz DP;
 
 vector<par> _ortho(DIRS);
 vector<par> _delta(DIRS);
+// lista de arboles a cortar, dado un arbol y una direccion
+map<par, vector<int>> _cut_before;
 
 class Tree{
 	public:
@@ -159,8 +162,11 @@ par dp(int depth, int N, int t, int dir) {
 			value += results[i].first;
 			energy += results[i].second;
 		}
-		ans = best({value, energy}, ans);
-
+		par new_ans = {value, energy};
+		ans = best(new_ans, ans);
+		if (ans == new_ans and not between.empty()) {
+			_cut_before[{t, dir}] = between;
+		}
 	}
 	_visited[t] = false;
 	return DP[dir][t] = ans;
@@ -201,6 +207,14 @@ int main(int argc, char const *argv[]) {
 			printf("%s %d: %ld %ld\n", dir_str[i], t, p.first, p.second);
 		}
 	}
-
+	for (auto p: _cut_before) {
+		int t = p.first.first;
+		int dir = p.first.second;
+		fprintf(stderr, "t = %d, dir = %s:", t, dir_str[dir]);
+		for (auto q: p.second) {
+			fprintf(stderr, " %d", q);
+		}
+		fprintf(stderr, "\n");
+	}
 	return 0;
 }
