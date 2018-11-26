@@ -3,6 +3,7 @@
 #include <map>
 #include <cstdio>
 #include <cmath>
+#include <queue>
 
 #define UNDEF -1
 #define LIMIT 32
@@ -24,7 +25,7 @@ vector<par> _ortho(DIRS);
 vector<par> _delta(DIRS);
 // lista de arboles a cortar, dado un arbol y una direccion
 map<par, vector<int> > _cut_before;
-map<trip> _best_default;
+vector<trip> _best_default;
 
 class Tree{
 	public:
@@ -67,12 +68,14 @@ int costToGo(int x1, int y1, int x2, int y2){
 void print_moves(int &E, int x1, int y1, int x2, int y2){
 	if (x1 < x2){
 		while (E && x1++ < x2){
+			printf("move right\n");
 			E--;
 		}
 	}
 
 	else if (x1 > x2){
 		while (E && x1-- > x2){
+			printf("move left\n");
 			E--;
 		}
 	}
@@ -81,12 +84,14 @@ void print_moves(int &E, int x1, int y1, int x2, int y2){
 
 	if (y1 < y2){
 		while (E && y1++ < y2){
+			printf("move up\n");
 			E--;
 		}
 	}
 
 	else if (y1 > y2){
 		while(E && y1-- > y2){
+			printf("move down\n");
 			E--;
 		}
 	}
@@ -178,6 +183,57 @@ par dp(int depth, int N, int t, int dir) {
 	return DP[dir][t] = ans;
 }
 
+long simulate(int N, int idx, int dir, bool dropping){
+	long result = 0;
+	int tree_propag = idx;
+
+	while (tree_propag >= 0){
+		//printf("tree_propag = %d\n", tree_propag);
+		Tree t = _trees[tree_propag];
+		int H = t._h, xi = t._x, yi = t._y;
+
+		if (H == 1) break;
+
+		for (int i = 1; i < H; i++){
+			printf("simulate dir: %d\n", dir);
+			if (dir == UP) yi++;
+			if (dir == DOWN) yi--;
+			if (dir == LEFT) xi--;
+			if (dir == RIGHT) xi++;
+
+			if (!onBoundaries(N, xi, yi)){
+				tree_propag = -1;
+				break;
+			}
+
+			int to_check = grid[yi][xi];
+			if (to_check != -1 && !_down[to_check]){
+				if (!t.canDrop(_trees[to_check])){
+					tree_propag = -1;
+					break;
+				}
+
+				Tree dropped = _trees[to_check];
+				result += dropped.getValue();
+				tree_propag = to_check;
+
+				if (dropping){
+					_down[to_check] = true;
+				}
+
+				break;
+			}
+
+			if (i + 1 == H){
+				tree_propag = -1;
+				break;
+			}
+		}
+	}
+
+	return result;
+}
+
 int next(int N, int E, int x, int y){
 	queue<par> q;
 	int queued = 0;
@@ -193,8 +249,8 @@ int next(int N, int E, int x, int y){
 	while(queued < LIMIT && !q.empty()){
 		par act = q.front(); q.pop();
 		int tree_idx = grid[act.first][act.second];
-		if (tree_idx != -1 && !down[tree_idx]){
-			Tree buff = list[tree_idx];
+		if (tree_idx != -1 && !_down[tree_idx]){
+			Tree buff = _trees[tree_idx];
 			int tx = buff._x, ty = buff._y, cost = costToGo(x, y, tx, ty);
 			queued++;
 			double ratio = _best_default[tree_idx].first.first / (cost + _best_default[tree_idx].first.second);
@@ -209,8 +265,8 @@ int next(int N, int E, int x, int y){
 			}
 		}
 		par neighs[4];
-		neighs[UP] = ii(act.first + 1, act.second); neighs[DOWN] = ii(act.first - 1, act.second);
-		neighs[LEFT] = ii(act.first, act.second - 1); neighs[RIGHT] = ii(act.first, act.second + 1); 
+		neighs[UP] = par(act.first + 1, act.second); neighs[DOWN] = par(act.first - 1, act.second);
+		neighs[LEFT] = par(act.first, act.second - 1); neighs[RIGHT] = par(act.first, act.second + 1); 
 
 		for (int i = 0; i < 4; i++){
 			if (onBoundaries(N, neighs[i].second, neighs[i].first) && !visited.count(neighs[i])){
@@ -227,16 +283,16 @@ int next(int N, int E, int x, int y){
 }
 
 
-void cut_routine(int depth, int t, int dir, int &x, int &y, int &energy){
+void cut_routine(int N, int depth, int t, int dir, int &x, int &y, int &energy){
+	fprintf(stderr, "LOLMEN: t = %d, depth = %d\n", t, depth);
 	if (energy <= 0) return;
 
 	if (depth < DEPTH){
-		for (auto cb: _cut_before[t]){
-			//si alcanza la profundidad máxima de recursion, solo cortamos
-			//de caso contrario, llamamos a cut_routine recursivamente 
-			//César halp
-
-			//aqui dentro se pueden hacer cosas un poco mas inteligentes...
+		for (auto cb: _cut_before[par(t,dir)]){
+			par o = _ortho[dir];
+			int dp1 = DP[o.first][cb].first, dp2 = DP[o.second][cb].first;
+			int best_ortho = (dp1 < dp2) ? o.second : o.first;
+			cut_routine(N, depth + 1, cb, best_ortho, x, y, energy);
 		}
 	}
 
@@ -246,13 +302,13 @@ void cut_routine(int depth, int t, int dir, int &x, int &y, int &energy){
 	if (!energy || !buff.canCut(energy)) return;
 
 	x = buff._x; y = buff._y;
-	down[t] = true;
+	_down[t] = true;
 	energy -= buff._d;
 	objective += buff.getValue();
 
 	printf("cut %s\n", dir_str[dir]);
 
-	objective += simulate(N, tree_index, dir, true);
+	objective += simulate(N, t, dir, true);
 	//imprimimos los pasos para llegar al árbol t
 	//check energy
 	//cut t
@@ -288,18 +344,19 @@ int main(int argc, char const *argv[]) {
 			par useless = dp(0, N, t, i);
 	}
 
+	/*
 	for (int i = 0; i < 4; i++){
 		for (int t = 0; t < T; t++) {
 			par p = DP[i][t];
 			printf("%s %d: %ld %ld\n", dir_str[i], t, p.first, p.second);
 		}
 	}
-
+	*/
 	for (int i = 0; i < T; i++){
 		trip best = trip(par(-1, -1), -1);
 		for (int d = 0; d < 4; d++){
-			if (best.first < DP[d][i].first)
-				best = par(DP[d][i], d);
+			if (best.first.first < DP[d][i].first)
+				best = trip(DP[d][i], d);
 		}
 
 		_best_default.push_back(best);
@@ -308,10 +365,11 @@ int main(int argc, char const *argv[]) {
 	_down.assign(T, false);
 	int energy = E, next_tree, xi = 0, yi = 0;
 
-	while(energy < 0){
+	while(energy > 0){
 		next_tree = next(N, energy, xi, yi);
-		cut_routine(0, next_tree, _best_default[next_tree].second, xi, yi, energy);
+		cut_routine(N, 0, next_tree, _best_default[next_tree].second, xi, yi, energy);
 	}
 
+	fprintf(stderr, "PROFIT: %ld\n", objective);
 	return 0;
 }

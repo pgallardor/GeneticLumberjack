@@ -62,12 +62,14 @@ int costToGo(int x1, int y1, int x2, int y2){
 void print_moves(int &E, int x1, int y1, int x2, int y2){
 	if (x1 < x2){
 		while (E && x1++ < x2){
+			printf("move right\n");
 			E--;
 		}
 	}
 
 	else if (x1 > x2){
 		while (E && x1-- > x2){
+			printf("move left\n");
 			E--;
 		}
 	}
@@ -76,12 +78,14 @@ void print_moves(int &E, int x1, int y1, int x2, int y2){
 
 	if (y1 < y2){
 		while (E && y1++ < y2){
+			printf("move up\n");
 			E--;
 		}
 	}
 
 	else if (y1 > y2){
 		while(E && y1-- > y2){
+			printf("move down\n");
 			E--;
 		}
 	}
