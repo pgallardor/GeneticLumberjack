@@ -6,7 +6,7 @@
 #include <queue>
 
 #define UNDEF -1
-#define LIMIT 32
+#define LIMIT 64
 #define DEPTH 1 //dunno howto use :D
 
 using namespace std;
@@ -195,7 +195,7 @@ long simulate(int N, int idx, int dir, bool dropping){
 		if (H == 1) break;
 
 		for (int i = 1; i < H; i++){
-			printf("simulate dir: %d\n", dir);
+			//printf("simulate dir: %d\n", dir);
 			if (dir == UP) yi++;
 			if (dir == DOWN) yi--;
 			if (dir == LEFT) xi--;
@@ -284,11 +284,12 @@ int next(int N, int E, int x, int y){
 
 
 void cut_routine(int N, int depth, int t, int dir, int &x, int &y, int &energy){
-	fprintf(stderr, "LOLMEN: t = %d, depth = %d\n", t, depth);
-	if (energy <= 0) return;
+	//fprintf(stderr, "LOLMEN: t = %d, depth = %d\n", t, depth);
+	if (energy <= 0 || _down[t]) return;
 
 	if (depth < DEPTH){
 		for (auto cb: _cut_before[par(t,dir)]){
+			if (_down[cb]) continue;
 			par o = _ortho[dir];
 			int dp1 = DP[o.first][cb].first, dp2 = DP[o.second][cb].first;
 			int best_ortho = (dp1 < dp2) ? o.second : o.first;
@@ -314,6 +315,30 @@ void cut_routine(int N, int depth, int t, int dir, int &x, int &y, int &energy){
 	//cut t
 	//simulate
 
+}
+
+void generate_test(int tcase, int N, int &x, int &y, int &E){
+	if (tcase == 4) return;
+	switch(tcase){
+		case 1:{
+			int perc = ceil(E*0.15);
+			x += min(N - 1, perc/2);
+			y += min(N - 1, perc/2 + perc%2);
+			E -= perc;
+			break;
+		}
+		case 2:{
+			int perc = ceil(E*0.10);
+			E -= perc;
+			y += min(perc, N - 1);
+			break;
+		}
+		case 3:{
+			int perc = ceil(E*0.10);
+			E-= perc;
+			x += min(N - 1, perc);
+		}
+	}
 }
 
 
@@ -355,21 +380,30 @@ int main(int argc, char const *argv[]) {
 	for (int i = 0; i < T; i++){
 		trip best = trip(par(-1, -1), -1);
 		for (int d = 0; d < 4; d++){
-			if (best.first.first < DP[d][i].first)
+			par p = best.first;
+			if ((best.first.first / best.first.second) < (DP[d][i].first / DP[d][i].second)){
 				best = trip(DP[d][i], d);
+			}
 		}
 
 		_best_default.push_back(best);
 	}
 
+
 	_down.assign(T, false);
-	int energy = E, next_tree, xi = 0, yi = 0;
+	int rnd_test = 4;
 
-	while(energy > 0){
-		next_tree = next(N, energy, xi, yi);
-		cut_routine(N, 0, next_tree, _best_default[next_tree].second, xi, yi, energy);
+	while(rnd_test--){
+		objective = 0;
+		int energy = E, next_tree, xi = 0, yi = 0;
+		generate_test(rnd_test, N, xi, yi, energy);
+		fprintf(stderr, "starting at (%d, %d)\n", xi, yi);
+		while(energy > 0){
+			next_tree = next(N, energy, xi, yi);
+			cut_routine(N, 0, next_tree, _best_default[next_tree].second, xi, yi, energy);
+		}
+
+		fprintf(stderr, "PROFIT: %ld\n", objective);
 	}
-
-	fprintf(stderr, "PROFIT: %ld\n", objective);
 	return 0;
 }
