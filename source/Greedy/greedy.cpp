@@ -218,6 +218,10 @@ void free(int N){
 	delete[] grid;
 }
 
+void gen_point(int N, int &x, int &y){
+	x = rand() % N;
+	y = rand() % N;
+}
 
 
 int main(){
