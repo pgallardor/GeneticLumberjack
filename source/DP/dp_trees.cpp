@@ -391,19 +391,15 @@ int main(int argc, char const *argv[]) {
 
 
 	_down.assign(T, false);
-	int rnd_test = 4;
 
-	while(rnd_test--){
-		objective = 0;
-		int energy = E, next_tree, xi = 0, yi = 0;
-		generate_test(rnd_test, N, xi, yi, energy);
-		fprintf(stderr, "starting at (%d, %d)\n", xi, yi);
-		while(energy > 0){
-			next_tree = next(N, energy, xi, yi);
-			cut_routine(N, 0, next_tree, _best_default[next_tree].second, xi, yi, energy);
-		}
-
-		fprintf(stderr, "PROFIT: %ld\n", objective);
+	int energy = E, next_tree, xi = 0, yi = 0;
+	//generate_test(rnd_test, N, xi, yi, energy);
+	while(energy > 0){
+		next_tree = next(N, energy, xi, yi);
+		cut_routine(N, 0, next_tree, _best_default[next_tree].second, xi, yi, energy);
 	}
+
+	fprintf(stderr, "PROFIT: %ld\n", objective);
+	
 	return 0;
 }
