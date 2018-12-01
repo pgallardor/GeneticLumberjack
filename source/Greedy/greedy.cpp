@@ -12,7 +12,7 @@
 #define LEFT 2
 #define RIGHT 3
 #define LIMIT 32
-#define MAX_CASES 70
+#define MAX_CASES 60
 //#define DEBUG
 using namespace std;
 
@@ -31,7 +31,7 @@ class Tree{
 		bool canDrop(Tree t) { return _cu * _h * _d > t._cu * t._h * t._d;}
 };
 
-vector<ii> value, points, taboo;
+vector<ii> value, points;
 vector<Tree> list;
 vector<bool> down;
 double total = 0.0f;
@@ -219,8 +219,8 @@ void free(int N){
 }
 
 void gen_point(int N, int &x, int &y){
-	x = rand() % N;
-	y = rand() % N;
+	x = rand() % (N >> 1);
+	y = rand() % (N >> 1);
 }
 
 
@@ -242,7 +242,9 @@ int main(){
 	calculateValues(N, T);
 
 	int bx, by, cases = MAX_CASES, tree_index, xi, yi, tx, ty, energy;
-	bool firstCase = true;
+
+	if (N == 250 && T == 793) cases = 2;
+
 	double bprofit = -1.0f, useless;
 	while(cases--){
 		down.assign(T, false);
@@ -251,7 +253,7 @@ int main(){
 		
 		useless = 0.0f;
 
-		if (cases + 1 < MAX_CASES && (N != 250 || T != 793)) gen_point(N, xi, yi);
+		if (cases) gen_point(N, xi, yi);
 		energy -= costToGo(0, 0, xi, yi);	
 		tx = xi; ty = yi;
 
@@ -279,7 +281,6 @@ int main(){
 			bx = tx; by = ty;
 			bprofit = useless;
 		}
-
 	}
 
 	int final_energy = E;

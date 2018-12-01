@@ -4,10 +4,13 @@
 #include <cstdio>
 #include <cmath>
 #include <queue>
+#include <cstdlib>
+#include <ctime>
 
 #define UNDEF -1
-#define LIMIT 64
+#define LIMIT 32
 #define DEPTH 1 //dunno howto use :D
+//#define DEBUG
 
 using namespace std;
 
@@ -283,7 +286,7 @@ int next(int N, int E, int x, int y){
 }
 
 
-void cut_routine(int N, int depth, int t, int dir, int &x, int &y, int &energy){
+void cut_routine(int N, int depth, int t, int dir, int &x, int &y, int &energy, bool print){
 	//fprintf(stderr, "LOLMEN: t = %d, depth = %d\n", t, depth);
 	if (energy <= 0 || _down[t]) return;
 
@@ -291,14 +294,18 @@ void cut_routine(int N, int depth, int t, int dir, int &x, int &y, int &energy){
 		for (auto cb: _cut_before[par(t,dir)]){
 			if (_down[cb]) continue;
 			par o = _ortho[dir];
-			int dp1 = DP[o.first][cb].first, dp2 = DP[o.second][cb].first;
+			long dp1 = DP[o.first][cb].first, dp2 = DP[o.second][cb].first;
 			int best_ortho = (dp1 < dp2) ? o.second : o.first;
-			cut_routine(N, depth + 1, cb, best_ortho, x, y, energy);
+			cut_routine(N, depth + 1, cb, best_ortho, x, y, energy, print);
 		}
 	}
 
 	Tree buff = _trees[t];
-	print_moves(energy, x, y, buff._x, buff._y);
+
+	if (print)
+		print_moves(energy, x, y, buff._x, buff._y);
+	else
+		energy -= costToGo(x, y, buff._x, buff._y);
 
 	if (!energy || !buff.canCut(energy)) return;
 
@@ -307,7 +314,8 @@ void cut_routine(int N, int depth, int t, int dir, int &x, int &y, int &energy){
 	energy -= buff._d;
 	objective += buff.getValue();
 
-	printf("cut %s\n", dir_str[dir]);
+	if (print)
+		printf("cut %s\n", dir_str[dir]);
 
 	objective += simulate(N, t, dir, true);
 	//imprimimos los pasos para llegar al árbol t
@@ -317,28 +325,9 @@ void cut_routine(int N, int depth, int t, int dir, int &x, int &y, int &energy){
 
 }
 
-void generate_test(int tcase, int N, int &x, int &y, int &E){
-	if (tcase == 4) return;
-	switch(tcase){
-		case 1:{
-			int perc = ceil(E*0.15);
-			x += min(N - 1, perc/2);
-			y += min(N - 1, perc/2 + perc%2);
-			E -= perc;
-			break;
-		}
-		case 2:{
-			int perc = ceil(E*0.10);
-			E -= perc;
-			y += min(perc, N - 1);
-			break;
-		}
-		case 3:{
-			int perc = ceil(E*0.10);
-			E-= perc;
-			x += min(N - 1, perc);
-		}
-	}
+void gen_point(int N, int &x, int &y){
+	x = rand() % (N >> 1);
+	y = rand() % (N >> 1);
 }
 
 
@@ -347,6 +336,7 @@ int main(int argc, char const *argv[]) {
 	scanf("%d %d %d", &E, &N, &T);
 
 	init(N);
+	srand(time(NULL));
 	DP = matriz(4, vector<par>(T, {UNDEF, UNDEF}));
 	_ortho[UP] = {LEFT, RIGHT};
 	_ortho[DOWN] = {LEFT, RIGHT};
@@ -364,6 +354,7 @@ int main(int argc, char const *argv[]) {
 		grid[y][x] = i;
 	}
 	_visited.assign(T, false);
+
 	for (int i = 0; i < 4; i++){
 		for (int t = 0; t < T; t++)
 			par useless = dp(0, N, t, i);
@@ -389,17 +380,51 @@ int main(int argc, char const *argv[]) {
 		_best_default.push_back(best);
 	}
 
+	int bxi, byi, energy, cases = 40, next_tree;
+	long b_objective = -1;
+	if (N == 250 && T == 793) cases = 2;
+	while(cases--){
+		_down.assign(T, false);
 
-	_down.assign(T, false);
+		energy = E;
+		int xi = 0, yi = 0;
+		if (cases) gen_point(N, xi, yi);
 
-	int energy = E, next_tree, xi = 0, yi = 0;
-	//generate_test(rnd_test, N, xi, yi, energy);
-	while(energy > 0){
-		next_tree = next(N, energy, xi, yi);
-		cut_routine(N, 0, next_tree, _best_default[next_tree].second, xi, yi, energy);
+		#ifdef DEBUG
+			fprintf(stderr, "Case %d : Starting from (%d, %d) -- ", 40 - cases, xi, yi);
+		#endif
+		energy -= costToGo(0, 0, xi, yi);
+		while(energy > 0){
+			next_tree = next(N, energy, xi, yi);
+			//fprintf(stderr, "next tree chosen...\n");
+			cut_routine(N, 0, next_tree, _best_default[next_tree].second, xi, yi, energy, false);
+		}
+
+		#ifdef DEBUG
+			fprintf(stderr, "PROFIT: %ld\n", objective);
+		#endif
+
+		if (objective > b_objective){
+			b_objective = objective;
+			bxi = xi; byi = yi;
+		}	
+		objective = 0;
 	}
 
-	fprintf(stderr, "PROFIT: %ld\n", objective);
+	#ifdef DEBUG
+		fprintf(stderr, "Best case: start (%d, %d) /w PROFIT %ld\n", bxi, byi, b_objective);
+	#endif
+
+	_down.assign(T, false);
+	energy = E;
+
+	print_moves(energy, 0, 0, bxi, byi);
+
+	while(energy > 0){
+		next_tree = next(N, energy, bxi, byi);
+		cut_routine(N, 0, next_tree, _best_default[next_tree].second, bxi, byi, energy, true);
+	}
+
 	
 	return 0;
 }
