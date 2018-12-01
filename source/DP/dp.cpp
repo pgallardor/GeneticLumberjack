@@ -120,6 +120,7 @@ long cost(int t) {
 
 par best(par p, par q) {
 	return (p.first/p.second > q.first/q.second) ? p : q;
+	// return (p.first > q.first) ? p : q;
 }
 
 // retorna los arboles que estan entre t1 y t2, independiente de si son botables o no
@@ -148,9 +149,9 @@ par dp(int depth, int N, int t, int dir) {
 		return DP[dir][t];
 	}
 	vector<int> trees = may_be_dominoed(N, t, dir);
-	cerr << "dominoables " << t << ":";
+	cerr << "dominoables " << t << " (" << dir_str[dir] << ")"<< ":";
 	for (auto _: trees) {
-		cerr << _ << " ";
+		cerr << " " << _ ;
 	}
 	cerr << endl;
 
@@ -164,7 +165,7 @@ par dp(int depth, int N, int t, int dir) {
 		vector<int> between = trees_between(N, t, tree, dir);
 		cerr << "between " << t << " and " << tree << ":";
 		for (auto _: between) {
-			cerr << _ << " ";
+			cerr << " " << _ ;
 		}
 		cerr << endl;
 		vector<par> results(between.size());
@@ -219,7 +220,7 @@ int main(int argc, char const *argv[]) {
 	_visited.assign(T, false);
 	for (int i = 0; i < 4; i++){
 		for (int t = 0; t < T; t++)
-			par useless = dp(0, N - t - 1, t, i);
+			par useless = dp(0, N, t, i);
 	}
 
 	for (int i = 0; i < 4; i++){
@@ -231,7 +232,7 @@ int main(int argc, char const *argv[]) {
 	for (auto p: _cut_before) {
 		int t = p.first.first;
 		int dir = p.first.second;
-		fprintf(stderr, "t = %d, dir = %s:", t, dir_str[dir]);
+		fprintf(stderr, "cut_before t = %d, dir = %s:", t, dir_str[dir]);
 		for (auto q: p.second) {
 			fprintf(stderr, " %d", q);
 		}
