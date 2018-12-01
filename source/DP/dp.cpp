@@ -143,10 +143,16 @@ vector<int> trees_between(int N, int t1, int t2, int dir) {
 
 
 par dp(int depth, int N, int t, int dir) {
+	cerr << depth << " " << t << " " << dir << endl;
 	if (DP[dir][t].first != UNDEF) {
 		return DP[dir][t];
 	}
 	vector<int> trees = may_be_dominoed(N, t, dir);
+	cerr << "dominoables " << t << ":";
+	for (auto _: trees) {
+		cerr << _ << " ";
+	}
+	cerr << endl;
 
 	if (trees.empty() or _visited[t]) {
 		DP[dir][t] = {profit(t), cost(t)};
@@ -156,6 +162,11 @@ par dp(int depth, int N, int t, int dir) {
 	par ans = {UNDEF, UNDEF};
 	for (auto tree: trees) {
 		vector<int> between = trees_between(N, t, tree, dir);
+		cerr << "between " << t << " and " << tree << ":";
+		for (auto _: between) {
+			cerr << _ << " ";
+		}
+		cerr << endl;
 		vector<par> results(between.size());
 		par last = dp(depth + 1, N, tree, dir);
 		long value = profit(t) + last.first;
@@ -169,7 +180,13 @@ par dp(int depth, int N, int t, int dir) {
 		par new_ans = {value, energy};
 		ans = best(new_ans, ans);
 		if (ans == new_ans and not between.empty()) {
+			cerr << "mejora con " << tree << endl;
 			_cut_before[{t, dir}] = between;
+			if (_cut_before.find({tree, dir}) != _cut_before.end()) {
+				for (auto tt: _cut_before[{tree, dir}]) {
+					_cut_before[{t, dir}].push_back(tt);
+				}
+			}
 		}
 	}
 	_visited[t] = false;
@@ -202,7 +219,7 @@ int main(int argc, char const *argv[]) {
 	_visited.assign(T, false);
 	for (int i = 0; i < 4; i++){
 		for (int t = 0; t < T; t++)
-			par useless = dp(0, N, t, i);
+			par useless = dp(0, N - t - 1, t, i);
 	}
 
 	for (int i = 0; i < 4; i++){
