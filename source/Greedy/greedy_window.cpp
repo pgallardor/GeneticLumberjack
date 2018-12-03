@@ -11,8 +11,8 @@
 #define DOWN 1
 #define LEFT 2
 #define RIGHT 3
-int LIMIT = 512;
-int MAX_CASES = 200;
+int LIMIT = 32;
+int MAX_CASES = 60;
 // #define DEBUG
 using namespace std;
 
@@ -36,6 +36,7 @@ vector<Tree> list;
 vector<bool> down;
 double total = 0.0f;
 int **grid;
+int (*next_)(int, int, int, int) = NULL;
 
 bool onBoundaries(int N, int x, int y){
 	return (x >= 0) && (y >= 0) && (x < N) && (y < N);
@@ -109,7 +110,7 @@ double simulate(int N, int idx, int dir, bool dropping){
 	return result;
 }
 
-int next(int N, int E, int x, int y){
+int next_window(int N, int E, int x, int y){
 	int x_begin = max(0, x - LIMIT/2);
 	int x_end = min(N, x + LIMIT/2);
 	int y_begin = max(0, y - LIMIT/2);
@@ -121,8 +122,9 @@ int next(int N, int E, int x, int y){
 			int t = grid[j][i];
 			if (t != -1 and not down[t]) {
 				Tree tree = list[t];
-				double ratio = double(value[t].first) / (tree._d + costToGo(x, y, tree._x, tree._y));
-				if (ratio > val) {
+				int cost = costToGo(x, y, tree._x, tree._y);
+				double ratio = double(value[t].first) / (tree._d + cost);
+				if (cost <= E and ratio > val) {
 					best_tree = t;
 					val = ratio;
 				}
@@ -141,6 +143,54 @@ int next(int N, int E, int x, int y){
 		}
 	}
 	return best_tree;
+}
+
+int next_bfs(int N, int E, int x, int y){
+	queue<ii> q;
+	int queued = 0;
+	int sol = -1, best_value = -1, t_sol, t_best;
+	bool canCutSomething = false;
+	map<ii, bool> visited;
+
+	ii init(y, x);
+	q.push(init);
+	visited[init] = true;
+
+	//falta alguna wea para limitar la búsqueda
+	while(queued < LIMIT && !q.empty()){
+		ii act = q.front(); q.pop();
+		int tree_idx = grid[act.first][act.second];
+		if (tree_idx != -1 && !down[tree_idx]){
+			Tree buff = list[tree_idx];
+			int tx = buff._x, ty = buff._y, cost = costToGo(x, y, tx, ty);
+			queued++;
+			double ratio = value[tree_idx].first / (cost + buff._d);
+			if (buff.canCut(E - cost) && ratio > best_value){
+				best_value = ratio;
+				sol = tree_idx;
+				canCutSomething = true;
+			}
+			else if (ratio > best_value){
+				t_sol = tree_idx;
+				t_best = ratio;
+			}
+		}
+		ii neighs[4];
+		neighs[UP] = ii(act.first + 1, act.second); neighs[DOWN] = ii(act.first - 1, act.second);
+		neighs[LEFT] = ii(act.first, act.second - 1); neighs[RIGHT] = ii(act.first, act.second + 1);
+
+		for (int i = 0; i < 4; i++){
+			if (onBoundaries(N, neighs[i].second, neighs[i].first) && !visited.count(neighs[i])){
+				q.push(neighs[i]);
+				visited[neighs[i]] = true;
+			}
+		}
+
+	}
+
+	if (!canCutSomething) sol = t_sol;
+
+	return sol;
 }
 
 void calculateValues(int N, int T){
@@ -213,12 +263,7 @@ void gen_point(int N, int &x, int &y){
 int main(){
 	int E, N, T, x, y, h, d, c, p;
 	scanf("%d %d %d", &E, &N, &T);
-	// if (N == 1000 or T == 1000) {
-	// 	LIMIT = 32;
-	// 	MAX_CASES = 60;
-	// }
 	init(N);
-	srand(time(NULL));
 
 	for (int i = 0; i < T; i++){
 		scanf("%d %d %d %d %d %d", &x, &y, &h, &d, &c, &p);
@@ -230,9 +275,25 @@ int main(){
 	down.assign(T, false);
 	calculateValues(N, T);
 
+	if (N >= 250) {
+		MAX_CASES = 100;
+		LIMIT = 256;
+		next_ = next_window;
+		srand(0);
+	}
+	else {
+		MAX_CASES = 32;
+		LIMIT = 60;
+		next_ = next_bfs;
+		srand(0);
+	}
 	int bx, by, cases = MAX_CASES, tree_index, xi, yi, tx, ty, energy;
-
-	if (N == 250 && T == 793) cases = 2;
+	if (N == 250 && T == 793) {
+		MAX_CASES = 11;
+		LIMIT = 32;
+		next_ = next_bfs;
+		srand(0);
+	}
 
 	double bprofit = -1.0f, useless;
 	while(cases--){
@@ -247,7 +308,10 @@ int main(){
 		tx = xi; ty = yi;
 
 		while (energy > 0){
-			tree_index = next(N, energy, xi, yi);
+			tree_index = next_(N, energy, xi, yi);
+			if (tree_index == -1) {
+				break;
+			}
 			Tree buff = list[tree_index];
 			//print_moves(energy, xi, yi, buff._x, buff._y);
 			energy -= costToGo(xi, yi, buff._x, buff._y);
@@ -277,13 +341,15 @@ int main(){
 
 	#ifdef DEBUG
 		fprintf(stderr, "BEST START POINT: (%d, %d)\n", bx, by);
-		fprintf(stderr, "Best case: start (%d, %d) /w PROFIT %ld\n", bx, by, int(bprofit));
 	#endif
 
 	down.assign(T, false);
 	print_moves(final_energy, 0, 0, bx, by);
 	while (final_energy > 0){
-		tree_index = next(N, final_energy, bx, by);
+		tree_index = next_(N, final_energy, bx, by);
+		if (tree_index == -1) {
+			break;
+		}
 		Tree tg = list[tree_index];
 		print_moves(final_energy, bx, by, tg._x, tg._y);
 		//energy -= costToGo(xi, yi, buff._x, buff._y);
