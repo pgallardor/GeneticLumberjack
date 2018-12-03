@@ -289,7 +289,7 @@ int main(){
 	}
 	int bx, by, cases = MAX_CASES, tree_index, xi, yi, tx, ty, energy;
 	if (N == 250 && T == 793) {
-		MAX_CASES = 11;
+		cases = 11;
 		LIMIT = 32;
 		next_ = next_bfs;
 		srand(0);
