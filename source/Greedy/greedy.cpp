@@ -58,9 +58,9 @@ void print_moves(int &E, int x1, int y1, int x2, int y2){
 class Tree{
 	public:
 		int _x, _y, _d, _h, _cu, _pu;
-		Tree(int x, int y, int h, int d, int c, int p) : 
+		Tree(int x, int y, int h, int d, int c, int p) :
 			_x(x), _y(y), _h(h), _d(d), _cu(c), _pu(p) {}
-		
+
 		double getValue() { return _pu * _h * _d; }
 		bool canCut(int E) { return E >= _d; }
 		bool canDrop(Tree t) { return _cu * _h * _d > t._cu * t._h * t._d;}
@@ -162,7 +162,7 @@ int next(int N, int E, int x, int y){
 		}
 		ii neighs[4];
 		neighs[UP] = ii(act.first + 1, act.second); neighs[DOWN] = ii(act.first - 1, act.second);
-		neighs[LEFT] = ii(act.first, act.second - 1); neighs[RIGHT] = ii(act.first, act.second + 1); 
+		neighs[LEFT] = ii(act.first, act.second - 1); neighs[RIGHT] = ii(act.first, act.second + 1);
 
 		for (int i = 0; i < 4; i++){
 			if (onBoundaries(N, neighs[i].second, neighs[i].first) && !visited.count(neighs[i])){
@@ -497,11 +497,11 @@ int main(){
 		down.assign(T, false);
 		energy = E;
 		xi = 0; yi = 0;
-		
+
 		useless = 0.0f;
 
 		if (cases) gen_point(N, xi, yi);
-		energy -= costToGo(0, 0, xi, yi);	
+		energy -= costToGo(0, 0, xi, yi);
 		tx = xi; ty = yi;
 
 		while (energy > 0){
@@ -526,7 +526,7 @@ int main(){
 
 		#ifdef DEBUG
 			fprintf(stderr, "Case %d. Starting from (%d, %d). PROFIT = %.0f\n", MAX_CASES - cases, tx, ty, useless);
-		#endif	
+		#endif
 
 		if (useless > bprofit){
 			bx = tx; by = ty;
@@ -539,8 +539,8 @@ int main(){
 	}
 
 	#ifdef DEBUG
-		fprintf(stderr, "BEST START POINT: (%d, %d)\n", bx, by);
-	#endif	
+		fprintf(stderr, "Best case: start (%d, %d) /w PROFIT %ld\n", bx, by, int(bprofit));
+	#endif
 
 	Solution s(best_sol, bx, by);
 	//s.print();
@@ -554,4 +554,3 @@ int main(){
 
 	return 0;
 }
-
