@@ -4,12 +4,12 @@
 #include <ctime>
 #include <cstring>
 
-#define STEP_MIN 5000
-#define STEP_MAX 5000
-#define GRID_SIZE_MIN 1000
-#define GRID_SIZE_MAX 1000
-#define TREE_MIN 10000
-#define TREE_MAX 10000
+#define STEP_MIN 640
+#define STEP_MAX 640
+#define GRID_SIZE_MIN 250
+#define GRID_SIZE_MAX 250
+#define TREE_MIN 793
+#define TREE_MAX 793
 #define HEIGHT_MIN 1
 #define HEIGHT_MAX 20
 #define WIDTH_MIN 1
