@@ -396,6 +396,8 @@ void Solution::improve(int N, int E, int V){
 	//pick first from to replace that is better than the best worst
 	
 	int i = 0, j = to_replace.size() - 1;
+
+	if (!to_replace.size()) return;
 	
 	if(_worst[i] < to_replace[j] && i < _worst.size() && j < to_replace.size()){
 		new_sol.push_back(to_replace[j]);
