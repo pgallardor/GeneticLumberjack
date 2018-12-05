@@ -13,7 +13,7 @@
 #define RIGHT 3
 int LIMIT = 32;
 int MAX_CASES = 60;
-// #define DEBUG
+#define DEBUG
 using namespace std;
 
 typedef pair<int, int> ii;
@@ -44,21 +44,6 @@ bool onBoundaries(int N, int x, int y){
 
 int costToGo(int x1, int y1, int x2, int y2){
 	return abs(x2 - x1) + abs(y2 - y1);
-}
-
-void generate_points(int N){
-	int divider = 5;
-	if (N >= 1 && N <= 50) divider = 2;
-	if (N > 50 && N <= 250) divider = 3;
-	if (N > 250 && N <= 500) divider = 4;
-
-	int aug = N/divider;
-
-	for(int x = 0; x < N; x+=aug){
-		for (int y = 0; y < N; y+=aug){
-			points.push_back(ii(x, y));
-		}
-	}
 }
 
 double simulate(int N, int idx, int dir, bool dropping){
@@ -277,7 +262,7 @@ int main(){
 
 	if (N >= 250) {
 		MAX_CASES = 100;
-		LIMIT = 256;
+		LIMIT = 256*N / 1000;
 		next_ = next_window;
 		srand(0);
 	}
@@ -298,6 +283,10 @@ int main(){
 	double bprofit = -1.0f, useless;
 	while(cases--){
 		down.assign(T, false);
+		if (N != 250 or T != 793) {
+			LIMIT = rand() % 100 + 356;
+			// LIMIT -= 1;
+		}
 		energy = E;
 		xi = 0; yi = 0;
 
