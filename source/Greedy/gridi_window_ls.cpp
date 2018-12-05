@@ -245,7 +245,10 @@ void gen_point(int N, int &x, int &y){
 	y = rand() % (N >> 1);
 }
 
-/* HORROR Y CAOS */
+/* 
+* EL HORROR HA LLEGADO AL PUEBLO
+*/
+
 class Solution {
 	private:
 		vector<tup> _sol_trees, _worst;
@@ -478,7 +481,7 @@ double Solution::simulate_(int N, int E){
 	}
 
 	while (energy > 0){
-		tree_index = next(N, energy, bx, by);
+		tree_index = next_(N, energy, bx, by);
 		Tree tg = list[tree_index];
 		print_moves(energy, bx, by, tg._x, tg._y);
 		//energy -= costToGo(xi, yi, buff._x, buff._y);
@@ -497,7 +500,9 @@ double Solution::simulate_(int N, int E){
 
 }
 
-/*LOL*/
+/*
+* AQUI ACABA EL HORROR
+*/
 
 
 int main(){
@@ -515,15 +520,15 @@ int main(){
 	down.assign(T, false);
 	calculateValues(N, T);
 
-	if (N >= 250) {
-		MAX_CASES = 100;
+	if (N > 250) {
+		MAX_CASES = 450;
 		LIMIT = 256*N / 1000;
 		next_ = next_window;
 		srand(0);
 	}
 	else {
-		MAX_CASES = 32;
-		LIMIT = 60;
+		MAX_CASES = 45;
+		LIMIT = 32;
 		next_ = next_bfs;
 		srand(0);
 	}
@@ -536,6 +541,9 @@ int main(){
 	}
 
 	double bprofit = -1.0f, useless;
+
+	vector<tup> best_sol, sol_temp;
+
 	while(cases--){
 		down.assign(T, false);
 		if (N != 250 or T != 793) {
@@ -557,8 +565,9 @@ int main(){
 				break;
 			}
 			Tree buff = list[tree_index];
+			int cost = costToGo(xi, yi, buff._x, buff._y); 
 			//print_moves(energy, xi, yi, buff._x, buff._y);
-			energy -= costToGo(xi, yi, buff._x, buff._y);
+			energy -= cost;
 
 			if (!energy || !buff.canCut(energy)) break;
 
@@ -566,8 +575,12 @@ int main(){
 			down[tree_index] = true;
 			energy -= buff._d;
 
+			long t_profit = buff.getValue() + simulate(N, tree_index, value[tree_index].second, true); 
+			tup info = tup(double(t_profit) / (buff._d + cost), ii(tree_index, value[tree_index].second));
+
 			//printf("cut %s\n", dir_str[value[tree_index].second]);
-			useless += buff.getValue() + simulate(N, tree_index, value[tree_index].second, true);
+			useless += t_profit;
+			sol_temp.push_back(info);
 		}
 
 		#ifdef DEBUG
@@ -577,7 +590,11 @@ int main(){
 		if (useless > bprofit){
 			bx = tx; by = ty;
 			bprofit = useless;
+			best_sol.clear();
+			best_sol = vector<tup>(sol_temp);
 		}
+
+		sol_temp.clear();
 	}
 
 	int final_energy = E;
@@ -585,29 +602,18 @@ int main(){
 
 	#ifdef DEBUG
 		fprintf(stderr, "BEST START POINT: (%d, %d)\n", bx, by);
-		fprintf(stderr, "BEST PROFIT = %.d\n", int(bprofit));
 	#endif
 
 	down.assign(T, false);
-	print_moves(final_energy, 0, 0, bx, by);
-	while (final_energy > 0){
-		tree_index = next_(N, final_energy, bx, by);
-		if (tree_index == -1) {
-			break;
-		}
-		Tree tg = list[tree_index];
-		print_moves(final_energy, bx, by, tg._x, tg._y);
-		//energy -= costToGo(xi, yi, buff._x, buff._y);
+	Solution s(best_sol, bx, by);
+	//s.print();
 
-		if (final_energy <= 0 || !tg.canCut(final_energy)) break;
+	down.assign(T, false);
+	//fprintf(stderr, "profit: %.0f\n", s.simulate_(N, E));
+	s.improve(N, E, min(bx / 2, by / 2));
 
-		bx = tg._x; by = tg._y;
-		down[tree_index] = true;
-		final_energy -= tg._d;
-
-		printf("cut %s\n", dir_str[value[tree_index].second]);
-		simulate(N, tree_index, value[tree_index].second, true);
-	}
+	down.assign(T, false);
+	fprintf(stderr, "profit: %.0f\n", s.simulate_(N, E));	
 
 	return 0;
 }
