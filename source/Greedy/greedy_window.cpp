@@ -330,6 +330,7 @@ int main(){
 
 	#ifdef DEBUG
 		fprintf(stderr, "BEST START POINT: (%d, %d)\n", bx, by);
+		fprintf(stderr, "BEST PROFIT = %.d\n", int(bprofit));
 	#endif
 
 	down.assign(T, false);
