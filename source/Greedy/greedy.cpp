@@ -12,7 +12,7 @@
 #define LEFT 2
 #define RIGHT 3
 #define LIMIT 32
-#define MAX_CASES 35
+#define MAX_CASES 60
 //#define DEBUG
 using namespace std;
 
@@ -253,6 +253,10 @@ Solution::Solution(vector<tup> st, int x, int y){
 		}
 	}
 
+	if (!_worst.size()){
+		_worst_ratio = _sol_trees[0].first;
+		return;
+	}
 	sort(_worst.begin(), _worst.end());
 	_worst_ratio = _worst[0].first;
 }
@@ -385,6 +389,8 @@ void Solution::improve(int N, int E, int V){
 		}
 	}
 
+	if (!to_replace.size()) return;
+
 	sort(to_replace.begin(), to_replace.end());
 
 	//printf("To replace:\n");
@@ -396,8 +402,6 @@ void Solution::improve(int N, int E, int V){
 	//pick first from to replace that is better than the best worst
 	
 	int i = 0, j = to_replace.size() - 1;
-
-	if (!to_replace.size()) return;
 	
 	if(_worst[i] < to_replace[j] && i < _worst.size() && j < to_replace.size()){
 		new_sol.push_back(to_replace[j]);
@@ -434,6 +438,7 @@ double Solution::simulate_(int N, int E){
 	for (auto s: _sol_trees){
 		if (energy <= 0) break;
 		tree_index = s.second.first;
+		if (down[tree_index]) continue;
 		Tree tg = list[tree_index];
 		print_moves(energy, bx, by, tg._x, tg._y);
 		//energy -= costToGo(xi, yi, buff._x, buff._y);
