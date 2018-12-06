@@ -550,7 +550,7 @@ int main(){
 	#endif
 
 	Solution s(best_sol, bx, by);
-	//s.print();
+	s.print();
 
 	down.assign(T, false);
 	//fprintf(stderr, "profit: %.0f\n", s.simulate_(N, E));
