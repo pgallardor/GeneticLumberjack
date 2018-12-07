@@ -13,7 +13,7 @@
 #define RIGHT 3
 #define LIMIT 32
 #define MAX_CASES 60
-//#define DEBUG
+#define DEBUG
 using namespace std;
 
 char dir_str[4][7] = {"up", "down", "left", "right"};
@@ -546,11 +546,11 @@ int main(){
 	}
 
 	#ifdef DEBUG
-		fprintf(stderr, "Best case: start (%d, %d) /w PROFIT %ld\n", bx, by, int(bprofit));
+		fprintf(stderr, "Best case: start (%d, %d) /w PROFIT %ld\n", bx, by, long(bprofit));
 	#endif
 
 	Solution s(best_sol, bx, by);
-	//s.print();
+	s.print();
 
 	down.assign(T, false);
 	//fprintf(stderr, "profit: %.0f\n", s.simulate_(N, E));

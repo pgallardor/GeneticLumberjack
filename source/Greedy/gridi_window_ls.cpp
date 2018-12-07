@@ -13,7 +13,8 @@
 #define RIGHT 3
 int LIMIT = 32;
 int MAX_CASES = 60;
-#define DEBUG
+#define DELTA 0.9
+//#define DEBUG
 using namespace std;
 
 typedef pair<int, int> ii;
@@ -292,14 +293,14 @@ void Solution::print(){
 	for (auto t : _sol_trees){
 		ii m = t.second;
 
-		printf("tree #%d (dropped %d): %.2f points per energy unit.\n", m.first, m.second, t.first);
+		fprintf(stderr, "tree #%d (dropped %d): %.2f points per energy unit.\n", m.first, m.second, t.first);
 	}
 
-	printf("Worst trees:\n");
+	fprintf(stderr, "Worst trees:\n");
 	for (auto wt: _worst){
 		ii m = wt.second;
 
-		printf("tree #%d (dropped %d): %.2f points per energy unit.\n", m.first, m.second, wt.first);
+		fprintf(stderr, "tree #%d (dropped %d): %.2f points per energy unit.\n", m.first, m.second, wt.first);
 	}
 }
 
@@ -317,7 +318,7 @@ tup Solution::explore_hor(int N, map<int, bool> &p, int V, int x, int y){
 			int ti = grid[y][x + i];
 			if (ti != -1 && !p.count(ti)){
 				Tree t = list[ti]; 
-				ratio = double(value[ti].first) / (i + t._d);
+				ratio = double(value[ti].first) / (2*i + t._d);
 
 				if (ratio > best.first){
 					best = tup(ratio, ii(ti, value[ti].second));
@@ -325,18 +326,18 @@ tup Solution::explore_hor(int N, map<int, bool> &p, int V, int x, int y){
 			}
 		}
 		if (i == 0) continue;
-
+		/*
 		if (onBoundaries(N, x - i, y)){
 			int ti = grid[y][x - i];
 			if (ti != -1 && !p.count(ti)){
 				Tree t = list[ti]; 
-				ratio = double(value[ti].first) / (i + t._d);
+				ratio = double(value[ti].first) / (2*i + t._d);
 
 				if (ratio > best.first){
 					best = tup(ratio, ii(ti, value[ti].second));
 				}
 			}
-		}
+		}*/
 	}
 
 	return best;
@@ -351,7 +352,7 @@ tup Solution::explore_vert(int N, map<int, bool> &p, int V, int x, int y){
 			int ti = grid[y + i][x];
 			if (ti != -1 && !p.count(ti)){
 				Tree t = list[ti]; 
-				ratio = double(value[ti].first) / (i + t._d);
+				ratio = double(value[ti].first) / (2*i + t._d);
 
 				if (ratio > best.first){
 					best = tup(ratio, ii(ti, value[ti].second));
@@ -359,18 +360,18 @@ tup Solution::explore_vert(int N, map<int, bool> &p, int V, int x, int y){
 			}
 		}
 		if (i == 0) continue;
-
+		/*
 		if (onBoundaries(N, x, y - i)){
 			int ti = grid[y - i][x];
 			if (ti != -1 && !p.count(ti)){
 				Tree t = list[ti]; 
-				ratio = double(value[ti].first) / (i + t._d);
+				ratio = double(value[ti].first) / (2*i + t._d);
 
 				if (ratio > best.first){
 					best = tup(ratio, ii(ti, value[ti].second));
 				}
 			}
-		}
+		}*/
 	}
 	return best;
 }
@@ -381,21 +382,24 @@ void Solution::improve(int N, int E, int V){
 	int x = 0, y = 0;
 	vector<tup> to_replace, new_sol;
 	map<int, bool> picked, replaced;
-
+	bool up = false;
 	while(x < sx && y < sy){
-		x++;
+		(up) ? y++ : x++;
+
 		auto nt = this->explore_vert(N, picked, V, x, y);
 		if (nt.first > _worst_ratio){
 			to_replace.push_back(nt);
 			picked[nt.second.first] = true;
 		}
-		y++;
 		nt = this->explore_hor(N, picked, V, x, y);
 
 		if (nt.first > _worst_ratio){
 			to_replace.push_back(nt);
 			picked[nt.second.first] = true;
 		}
+
+		//V--;
+		up = !up;
 	}
 
 	while(x < sx){
@@ -405,6 +409,8 @@ void Solution::improve(int N, int E, int V){
 			to_replace.push_back(nt);
 			picked[nt.second.first] = true;
 		}
+
+		//V--;
 	}
 
 	while(y < sy){
@@ -414,6 +420,8 @@ void Solution::improve(int N, int E, int V){
 			to_replace.push_back(nt);
 			picked[nt.second.first] = true;
 		}
+
+		//V--;
 	}
 
 	if (!to_replace.size()) return;
@@ -427,14 +435,14 @@ void Solution::improve(int N, int E, int V){
 	//}
 
 	//pick first from to replace that is better than the best worst
+	//let try limitating the number of replaced trees
+	int i = 0, j = to_replace.size() - 1, cnt = 0;
 	
-	int i = 0, j = to_replace.size() - 1;
-	
-	if(_worst[i] < to_replace[j] && i < _worst.size() && j < to_replace.size()){
+	while(cnt < 1 && i < _worst.size() && j >= 0 && _worst[i].first < to_replace[j].first){
 		new_sol.push_back(to_replace[j]);
 		replaced[_worst[i].second.first] = true;
 
-		i++; j--;
+		i++; j--; cnt++;
 	}
 
 	for (auto t: _sol_trees){
@@ -458,6 +466,7 @@ void Solution::improve(int N, int E, int V){
 
 
 double Solution::simulate_(int N, int E){
+	fprintf(stderr, "starting simulation\n");
 	int energy = E, bx = _start_point.first, by = _start_point.second, tree_index;
 	double prof = 0.0f;
 	print_moves(energy, 0, 0, bx, by);
@@ -465,7 +474,7 @@ double Solution::simulate_(int N, int E){
 	for (auto s: _sol_trees){
 		if (energy <= 0) break;
 		tree_index = s.second.first;
-		if (down[tree_index]) continue;
+		if (tree_index == -1 || down[tree_index]) continue;
 		Tree tg = list[tree_index];
 		print_moves(energy, bx, by, tg._x, tg._y);
 		//energy -= costToGo(xi, yi, buff._x, buff._y);
@@ -482,6 +491,7 @@ double Solution::simulate_(int N, int E){
 
 	while (energy > 0){
 		tree_index = next_(N, energy, bx, by);
+		if (tree_index == -1) break;
 		Tree tg = list[tree_index];
 		print_moves(energy, bx, by, tg._x, tg._y);
 		//energy -= costToGo(xi, yi, buff._x, buff._y);
@@ -520,8 +530,8 @@ int main(){
 	down.assign(T, false);
 	calculateValues(N, T);
 
-	if (N > 250) {
-		MAX_CASES = 450;
+	if (N >= 50) {
+		MAX_CASES = 500;
 		LIMIT = 256*N / 1000;
 		next_ = next_window;
 		srand(0);
@@ -532,13 +542,14 @@ int main(){
 		next_ = next_bfs;
 		srand(0);
 	}
-	int bx, by, cases = MAX_CASES, tree_index, xi, yi, tx, ty, energy;
+
 	if (N == 250 && T == 793) {
-		cases = 11;
+		MAX_CASES = 11;
 		LIMIT = 32;
 		next_ = next_bfs;
 		srand(0);
 	}
+	int bx, by, cases = MAX_CASES, tree_index, xi, yi, tx, ty, energy;
 
 	double bprofit = -1.0f, useless;
 
@@ -546,7 +557,7 @@ int main(){
 
 	while(cases--){
 		down.assign(T, false);
-		if (N != 250 or T != 793) {
+		if (N < 250 || N != 250 or T != 793) {
 			LIMIT = rand() % 100 + 356;
 			// LIMIT -= 1;
 		}
@@ -601,14 +612,14 @@ int main(){
 
 
 	#ifdef DEBUG
-		fprintf(stderr, "BEST START POINT: (%d, %d)\n", bx, by);
+		fprintf(stderr, "BEST START POINT: (%d, %d) w/ PROFIT = %.0f\n", bx, by, bprofit);
 	#endif
 
-	down.assign(T, false);
+	//down.assign(T, false);
 	Solution s(best_sol, bx, by);
 	//s.print();
 
-	down.assign(T, false);
+	//down.assign(T, false);
 	//fprintf(stderr, "profit: %.0f\n", s.simulate_(N, E));
 	s.improve(N, E, min(bx / 2, by / 2));
 
