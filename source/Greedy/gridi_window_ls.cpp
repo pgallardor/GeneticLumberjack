@@ -13,7 +13,7 @@
 #define RIGHT 3
 int LIMIT = 32;
 int MAX_CASES = 60;
-#define DELTA 0.8
+#define DELTA 0.9
 //#define DEBUG
 using namespace std;
 
@@ -326,7 +326,7 @@ tup Solution::explore_hor(int N, map<int, bool> &p, int V, int x, int y){
 			}
 		}
 		if (i == 0) continue;
-
+		/*
 		if (onBoundaries(N, x - i, y)){
 			int ti = grid[y][x - i];
 			if (ti != -1 && !p.count(ti)){
@@ -337,7 +337,7 @@ tup Solution::explore_hor(int N, map<int, bool> &p, int V, int x, int y){
 					best = tup(ratio, ii(ti, value[ti].second));
 				}
 			}
-		}
+		}*/
 	}
 
 	return best;
@@ -360,7 +360,7 @@ tup Solution::explore_vert(int N, map<int, bool> &p, int V, int x, int y){
 			}
 		}
 		if (i == 0) continue;
-
+		/*
 		if (onBoundaries(N, x, y - i)){
 			int ti = grid[y - i][x];
 			if (ti != -1 && !p.count(ti)){
@@ -371,7 +371,7 @@ tup Solution::explore_vert(int N, map<int, bool> &p, int V, int x, int y){
 					best = tup(ratio, ii(ti, value[ti].second));
 				}
 			}
-		}
+		}*/
 	}
 	return best;
 }
@@ -382,15 +382,15 @@ void Solution::improve(int N, int E, int V){
 	int x = 0, y = 0;
 	vector<tup> to_replace, new_sol;
 	map<int, bool> picked, replaced;
-
+	bool up = false;
 	while(x < sx && y < sy){
-		x++;
+		(up) ? y++ : x++;
+
 		auto nt = this->explore_vert(N, picked, V, x, y);
 		if (nt.first > _worst_ratio){
 			to_replace.push_back(nt);
 			picked[nt.second.first] = true;
 		}
-		y++;
 		nt = this->explore_hor(N, picked, V, x, y);
 
 		if (nt.first > _worst_ratio){
@@ -398,7 +398,8 @@ void Solution::improve(int N, int E, int V){
 			picked[nt.second.first] = true;
 		}
 
-		V = V * DELTA;
+		//V--;
+		up = !up;
 	}
 
 	while(x < sx){
@@ -409,7 +410,7 @@ void Solution::improve(int N, int E, int V){
 			picked[nt.second.first] = true;
 		}
 
-		V = V * DELTA;
+		//V--;
 	}
 
 	while(y < sy){
@@ -420,7 +421,7 @@ void Solution::improve(int N, int E, int V){
 			picked[nt.second.first] = true;
 		}
 
-		V = V * DELTA;
+		//V--;
 	}
 
 	if (!to_replace.size()) return;
@@ -437,7 +438,7 @@ void Solution::improve(int N, int E, int V){
 	//let try limitating the number of replaced trees
 	int i = 0, j = to_replace.size() - 1, cnt = 0;
 	
-	while(i < _worst.size() && j >= 0 && _worst[i].first < to_replace[j].first){
+	while(cnt < 1 && i < _worst.size() && j >= 0 && _worst[i].first < to_replace[j].first){
 		new_sol.push_back(to_replace[j]);
 		replaced[_worst[i].second.first] = true;
 
@@ -529,7 +530,7 @@ int main(){
 	down.assign(T, false);
 	calculateValues(N, T);
 
-	if (N >= 250) {
+	if (N >= 50) {
 		MAX_CASES = 500;
 		LIMIT = 256*N / 1000;
 		next_ = next_window;
@@ -541,7 +542,6 @@ int main(){
 		next_ = next_bfs;
 		srand(0);
 	}
-
 
 	if (N == 250 && T == 793) {
 		MAX_CASES = 11;
@@ -557,7 +557,7 @@ int main(){
 
 	while(cases--){
 		down.assign(T, false);
-		if (N != 250 or T != 793) {
+		if (N < 250 || N != 250 or T != 793) {
 			LIMIT = rand() % 100 + 356;
 			// LIMIT -= 1;
 		}
@@ -612,7 +612,7 @@ int main(){
 
 
 	#ifdef DEBUG
-		fprintf(stderr, "BEST START POINT: (%d, %d)\n", bx, by);
+		fprintf(stderr, "BEST START POINT: (%d, %d) w/ PROFIT = %.0f\n", bx, by, bprofit);
 	#endif
 
 	//down.assign(T, false);
@@ -621,7 +621,7 @@ int main(){
 
 	//down.assign(T, false);
 	//fprintf(stderr, "profit: %.0f\n", s.simulate_(N, E));
-	s.improve(N, E, max(bx / 2, by / 2));
+	s.improve(N, E, min(bx / 2, by / 2));
 
 	down.assign(T, false);
 	fprintf(stderr, "profit: %.0f\n", s.simulate_(N, E));	
